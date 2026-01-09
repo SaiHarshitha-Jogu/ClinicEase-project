@@ -1,0 +1,256 @@
+.patient-photo-upload {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.dark .patient-photo-upload {
+  border-color: #4a4a4a;
+  background: #2d2d2d;
+}
+
+.patient-photo-upload h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.dark .patient-photo-upload h3 {
+  color: #e0e0e0;
+}
+
+.photo-subtitle {
+  margin: 0 0 1rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.dark .photo-subtitle {
+  color: #aaa;
+}
+
+.photo-preview {
+  position: relative;
+  display: inline-block;
+}
+
+.patient-photo {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+}
+
+.dark .patient-photo {
+  border-color: #4a4a4a;
+}
+
+.remove-photo-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.remove-photo-btn:hover {
+  background: #d32f2f;
+}
+
+.photo-options {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.photo-option-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  min-height: 100px;
+  justify-content: center;
+}
+
+.dark .photo-option-btn {
+  border-color: #4a4a4a;
+  background: #3d3d3d;
+  color: #e0e0e0;
+}
+
+.photo-option-btn:hover {
+  border-color: #2196f3;
+  background: #f5f5f5;
+}
+
+.dark .photo-option-btn:hover {
+  border-color: #4a90e2;
+  background: #4a4a4a;
+}
+
+.photo-option-btn svg {
+  font-size: 1.5rem;
+  color: #2196f3;
+}
+
+.camera-btn svg {
+  color: #4caf50;
+}
+
+.upload-btn svg {
+  color: #ff9800;
+}
+
+.photo-option-btn span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: inherit;
+  display: block;
+  margin-top: 4px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.upload-btn span {
+  color: #333 !important;
+}
+
+.dark .upload-btn span {
+  color: #e0e0e0 !important;
+}
+
+.camera-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.camera-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  overflow: hidden;
+}
+
+.dark .camera-content {
+  background: #2d2d2d;
+}
+
+.camera-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.dark .camera-header {
+  border-bottom-color: #4a4a4a;
+}
+
+.camera-header h4 {
+  margin: 0;
+  color: #333;
+}
+
+.dark .camera-header h4 {
+  color: #e0e0e0;
+}
+
+.close-camera-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0.5rem;
+}
+
+.dark .close-camera-btn {
+  color: #aaa;
+}
+
+.camera-view {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background: #000;
+}
+
+.camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-controls {
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid #eee;
+}
+
+.dark .camera-controls {
+  border-top-color: #4a4a4a;
+}
+
+.capture-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.capture-btn:hover {
+  background: #45a049;
+}
+
+@media (max-width: 768px) {
+  .photo-options {
+    flex-direction: column;
+  }
+  
+  .photo-option-btn {
+    width: 100%;
+  }
+  
+  .camera-view {
+    height: 300px;
+  }
+}

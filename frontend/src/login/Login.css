@@ -1,0 +1,363 @@
+/* src/login/LoginPage.css */
+
+/* Main Layout - Full Width Design */
+.login-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  font-family: 'Segoe UI', sans-serif;
+  background-image: url("/bg-login.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Welcome Section - Full Width */
+.tagline {
+  text-align: center;
+  margin-bottom: 40px;
+  width: 100%;
+}
+
+.tagline h1 {
+  font-size: 2.5rem;
+  color: #1976d2;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.tagline p {
+  font-size: 1.2rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* Profile Selection Section - Full Width Horizontal */
+.profile-selection {
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 40px;
+}
+
+.profile-selection h4 {
+  text-align: center;
+  color: #1976d2;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 30px;
+}
+
+.profile-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.profile-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 40px;
+  border: 2px solid #e0e0e0;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  min-width: 180px;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.profile-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.profile-btn.active {
+  border-color: #1976d2;
+  box-shadow: 0 6px 25px rgba(33, 150, 243, 0.25);
+}
+
+.profile-btn.active::before {
+  background: #1976d2;
+}
+
+.profile-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.profile-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+/* Login Forms Container - Full Width */
+.login-forms-container {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  justify-content: center;
+}
+
+.login-form-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 50px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 100%;
+  max-width: 500px;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 25px;
+  border-bottom: 2px solid rgba(33, 150, 243, 0.1);
+}
+
+.form-header h4 {
+  margin: 0 0 10px 0;
+  color: #1976d2;
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.form-header p {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Form Elements */
+.login-form-card label {
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: block;
+  color: #333;
+  font-size: 1rem;
+}
+
+.login-form-card input {
+  width: 100%;
+  padding: 16px 20px;
+  margin-bottom: 25px;
+  border-radius: 12px;
+  border: 2px solid #e0e0e0;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.login-form-card input:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.1);
+}
+
+.password-container input {
+  margin-bottom: 0 !important;
+  padding-right: 55px !important;
+  transition: all 0.3s ease;
+}
+
+.login-form-card .password-container {
+  position: relative;
+  margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+}
+
+.login-form-card .eye-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  /* Slate icon color */
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1.5rem;
+  z-index: 5;
+}
+
+.password-container:focus-within .eye-btn {
+  color: #1976d2;
+}
+
+.login-form-card .eye-btn:hover {
+  background-color: rgba(33, 150, 243, 0.08);
+  color: #1565c0;
+  transform: scale(1.1);
+}
+
+.login-form-card .eye-btn:active {
+  transform: scale(0.95);
+}
+
+/* Submit Buttons */
+.submit-btn {
+  width: 100%;
+  padding: 16px 24px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 25px;
+}
+
+.doctor-submit {
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  color: white;
+}
+
+.doctor-submit:hover {
+  background: linear-gradient(135deg, #1976d2, #1565c0);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3);
+}
+
+.clinic-submit {
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+  color: white;
+}
+
+.clinic-submit:hover {
+  background: linear-gradient(135deg, #7b1fa2, #6a1b9a);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(156, 39, 176, 0.3);
+}
+
+.patient-submit {
+  background: linear-gradient(135deg, #4caf50, #388e3c);
+  color: white;
+}
+
+.patient-submit:hover {
+  background: linear-gradient(135deg, #388e3c, #2e7d32);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+}
+
+/* Register Link */
+.register-link {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 1rem;
+  color: #666;
+}
+
+.register-link a {
+  color: #1976d2;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .profile-buttons {
+    gap: 25px;
+  }
+
+  .profile-btn {
+    padding: 25px 35px;
+    min-width: 160px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tagline h1 {
+    font-size: 2rem;
+  }
+
+  .tagline p {
+    font-size: 1rem;
+  }
+
+  .profile-selection h4 {
+    font-size: 1.5rem;
+  }
+
+  .profile-buttons {
+    gap: 20px;
+  }
+
+  .profile-btn {
+    padding: 20px 30px;
+    min-width: 140px;
+  }
+
+  .profile-icon {
+    font-size: 2.5rem;
+  }
+
+  .profile-title {
+    font-size: 1.1rem;
+  }
+
+  .login-form-card {
+    padding: 40px 30px;
+    margin: 0 20px;
+  }
+
+  .form-header h4 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .profile-btn {
+    width: 250px;
+    padding: 25px 30px;
+  }
+
+  .login-form-card {
+    padding: 30px 25px;
+    margin: 0 15px;
+  }
+
+  .tagline h1 {
+    font-size: 1.8rem;
+  }
+}

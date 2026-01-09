@@ -1,0 +1,6 @@
+ultralytics
+flask
+flask-cors
+waitress
+pillow
+roboflow
