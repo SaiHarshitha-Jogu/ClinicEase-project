@@ -1,0 +1,32 @@
+stages:
+  - build
+
+variables:
+  # Use the GitLab Registry to store your images
+  DOCKER_REGISTRY: $CI_REGISTRY_IMAGE
+  FRONTEND_IMAGE: $CI_REGISTRY_IMAGE/frontend:latest
+  BACKEND_IMAGE: $CI_REGISTRY_IMAGE/backend:latest
+  DENTAL_AI_IMAGE: $CI_REGISTRY_IMAGE/dental-ai:latest
+
+# Use Docker-in-Docker to allow building images inside the CI runner
+image: docker:latest
+services:
+  - docker:dind
+
+build_images:
+  stage: build
+  script:
+    # 1. Login to GitLab's Container Registry
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    
+    # 2. Build the images using the Dockerfiles in each directory
+    - docker build -t $FRONTEND_IMAGE ./frontend
+    - docker build -t $BACKEND_IMAGE ./backend
+    - docker build -t $DENTAL_AI_IMAGE ./DentalXrayAI
+    
+    # 3. Push the images to the registry so they can be pulled later
+    - docker push $FRONTEND_IMAGE
+    - docker push $BACKEND_IMAGE
+    - docker push $DENTAL_AI_IMAGE
+  only:
+    - main # This will run every time you push to the main branch
