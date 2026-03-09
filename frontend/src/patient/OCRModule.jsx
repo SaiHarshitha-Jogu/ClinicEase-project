@@ -58,7 +58,7 @@ function OCRModule() {
 
       console.log("Uploading prescription for user:", user.uid);
 
-     const API_URL = "https://clinicease-project.onrender.com";
+     const API_URL = const API_URL = "https://clinic-ease-backend.onrender.com";
       const response = await fetch(`${API_URL}/upload`, {
         method: "POST",
         body: formData,
