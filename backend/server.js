@@ -20,8 +20,12 @@ const __dirname = dirname(__filename);
 dotenv.config();
 
 const app = express();
-app.use(cors());
-const port = 3000;
+app.use(cors({
+  origin: "https://clinic-ease-project-f8v9.vercel.app",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
+const port = process.env.PORT || 3000;
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -129,8 +133,8 @@ app.post('/create-checkout-session', async (req, res) => {
                 },
             ],
             metadata: metadata || {},
-            success_url: `${req.headers.origin || 'http://localhost:5173'}/dashboard?payment=success`,
-            cancel_url: `${req.headers.origin || 'http://localhost:5173'}/dashboard?payment=cancel`,
+            success_url: `https://clinic-ease-project-f8v9.vercel.app/dashboard?payment=success`,
+            cancel_url: `https://clinic-ease-project-f8v9.vercel.app/dashboard?payment=cancel`,
         });
 
         res.json({ id: session.id, url: session.url });
