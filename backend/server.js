@@ -22,16 +22,9 @@ const cors = require("cors");
 
 const cors = require("cors");
 
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://clinic-ease-project-f8v9.vercel.app",
-    "https://clinic-ease-project-f8v9-git-main-saiharshitha-jogus-projects.vercel.app",
-    "https://clinic-ease-project-f8v9-97bl1i52m-saiharshitha-jogus-projects.vercel.app"
-  ],
-  methods: ["GET", "POST"],
-  credentials: true
-}));
+const cors = require("cors");
+
+app.use(cors());
 
 // ------------------ Multer (Memory Storage) ------------------
 const upload = multer({ storage: multer.memoryStorage() });
