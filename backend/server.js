@@ -18,9 +18,15 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // ------------------ CORS ------------------
+const cors = require("cors");
+
 app.use(cors({
-  origin: "https://clinic-ease-project-f8v9-git-main-saiharshitha-jogus-projects.vercel.app","https://clinic-ease-project-f8v9-97bl1i52m-saiharshitha-jogus-projects.vercel.app",
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: [
+    "https://clinic-ease-project-f8v9-git-main-saiharshitha-jogus-projects.vercel.app",
+    "https://clinic-ease-project-f8v9-97bl1i52m-saiharshitha-jogus-projects.vercel.app",
+    "http://localhost:5173"
+  ],
+  methods: ["GET", "POST"],
   credentials: true
 }));
 
