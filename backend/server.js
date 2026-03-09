@@ -19,7 +19,7 @@ const port = process.env.PORT || 3000;
 
 // ------------------ CORS ------------------
 app.use(cors({
-  origin: "https://clinic-ease-project-f8v9-git-main-saiharshitha-jogus-projects.vercel.app",
+  origin: "https://clinic-ease-project-f8v9-git-main-saiharshitha-jogus-projects.vercel.app","https://clinic-ease-project-f8v9-97bl1i52m-saiharshitha-jogus-projects.vercel.app",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
