@@ -44,7 +44,7 @@ try {
   } else {
 
     visionClient = new ImageAnnotatorClient({
-      keyFilename: path.join(process.cwd(), 'backend', 'prescription-ocr-service.json'),
+      keyFilename: path.join(process.cwd(), 'prescription-ocr-service.json'),
       projectId: process.env.GOOGLE_CLOUD_PROJECT
     });
 
