@@ -44,10 +44,9 @@ try {
   } else {
 
     visionClient = new ImageAnnotatorClient({
-      keyFilename: path.join(process.cwd(), 'prescription-ocr-service.json'),
-      projectId: process.env.GOOGLE_CLOUD_PROJECT
-    });
-
+  credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
+  projectId: process.env.GOOGLE_CLOUD_PROJECT
+});
     console.log('✅ Google Vision initialized with service account');
 
   }
