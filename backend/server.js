@@ -27,7 +27,7 @@ app.use(cors({
 }));
 const port = process.env.PORT || 3000;
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Set Google Cloud project ID
 process.env.GOOGLE_CLOUD_PROJECT = 'clinic-management-ocr';
@@ -228,13 +228,9 @@ app.post('/upload', upload.single('prescription'), async (req, res) => {
             console.error('No file uploaded.');
             return res.status(400).send('No file uploaded.');
         }
-        const imagePath = path.join(__dirname, req.file.path);
-        console.log('Image path:', imagePath);
+        console.log('Processing image from memory buffer...');
 
-        // Test the Vision API with a simple request first
-        try {
-            console.log('Attempting to process image with Vision API...');
-            const [result] = await visionClient.textDetection(imagePath);
+            const [result] = await visionClient.textDetection({ image: { content: req.file.buffer } });
             const text = result.textAnnotations[0]?.description || "No text detected";
             console.log('OCR text extracted:', text);
 
