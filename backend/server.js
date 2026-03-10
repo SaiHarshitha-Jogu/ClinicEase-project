@@ -119,7 +119,7 @@ async function extractMedicinesAndDosages(ocrText) {
 
   try {
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
 Extract all medicine names, dosages, timing, frequency, and instructions from the following prescription text.
