@@ -68,7 +68,7 @@ console.log('✅ Gemini initialized');
 async function extractMedicinesAndDosages(ocrText) {
     try {
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.0-pro" // ✅ FIXED MODEL
+            model: "gemini-2.0-flash" // ✅ FIXED MODEL
         });
 
         const prompt = `
