@@ -31,7 +31,7 @@ function Dashboard() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [calendarDays, setCalendarDays] = useState([]);
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+  const apiBase = import.meta.env.VITE_API_BASE;
   const [approvedXrays, setApprovedXrays] = useState([]);
 
   const [xrayResults, setXrayResults] = useState([]);
@@ -546,15 +546,11 @@ function Dashboard() {
                         </td>
                         <td>
                           <img
-                            src={`/uploads/annotated_xrays/${x.annotatedImageUrl?.split('/').pop()}`}
-                            alt="X-ray"
-                            style={{ width: "250px", maxWidth: "100%", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
-                            onError={(e) => {
-                              // If local fails, try the original URL from DB as a last resort
-                              if (e.target.src !== x.annotatedImageUrl) {
-                                e.target.src = x.annotatedImageUrl;
-                              }
-                            }}
+                            
+  src={x.annotatedImageUrl}  // use the actual URL from Firestore
+  alt="X-ray"
+  style={{ width: "250px", maxWidth: "100%", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+  onError={(e) => { e.target.src = "/fallback-xray.png"; }} // optional fallback if image fails
                           />
                         </td>
                         <td>{x.doctorName}</td>
