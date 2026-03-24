@@ -9,8 +9,6 @@ import { dirname } from 'path';
 import cors from "cors";
 import fs from 'fs';
 import { config } from './config.js';
-import Stripe from 'stripe';
-import Razorpay from 'razorpay';
 import { initializeReminderScheduler } from './src/server/reminderScheduler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,12 +17,12 @@ const __dirname = dirname(__filename);
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000; // ✅ FIXED
+const port = process.env.PORT || 10000; // ✅ IMPORTANT FOR RENDER
 
+// ✅ FIXED CORS (allow all for now)
 app.use(cors({
-  origin: "https://clinic-ease-project-f8v9.vercel.app",
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
 }));
 
 app.use(express.json());
@@ -67,7 +65,7 @@ console.log('✅ Gemini initialized');
 async function extractMedicinesAndDosages(ocrText) {
     try {
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash" // ✅ NOT CHANGED
+            model: "gemini-2.0-flash"
         });
 
         const prompt = `
@@ -110,8 +108,6 @@ app.post('/upload', upload.single('prescription'), async (req, res) => {
             return res.status(400).send('No file uploaded');
         }
 
-        console.log('Running OCR...');
-
         const [result] = await visionClient.textDetection({
             image: { content: req.file.buffer }
         });
@@ -125,8 +121,6 @@ app.post('/upload', upload.single('prescription'), async (req, res) => {
         console.log("OCR TEXT:", text);
 
         const extractedData = await extractMedicinesAndDosages(text);
-
-        console.log("Gemini:", extractedData);
 
         let parsedData;
 
@@ -144,13 +138,13 @@ app.post('/upload', upload.single('prescription'), async (req, res) => {
     }
 });
 
-// ---------------- TEST ----------------
+// ---------------- TEST ROUTE ----------------
 app.get('/test', (req, res) => {
     res.json({ message: 'Server working' });
 });
 
-// ---------------- SERVER (ONLY ONE) ----------------
-const server = app.listen(port, "0.0.0.0", () => {
+// ---------------- START SERVER ----------------
+app.listen(port, "0.0.0.0", () => {
     console.log(`✅ Server running on port ${port}`);
 
     try {
