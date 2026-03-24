@@ -7,19 +7,21 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import cors from "cors";
-import fs from 'fs';
 import { config } from './config.js';
 import { initializeReminderScheduler } from './src/server/reminderScheduler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Load env
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 10000; // ✅ IMPORTANT FOR RENDER
 
-// ✅ FIXED CORS (allow all for now)
+// ✅ IMPORTANT FOR RENDER
+const port = process.env.PORT || 10000;
+
+// ✅ CORS FIX (avoid blocking)
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -27,6 +29,7 @@ app.use(cors({
 
 app.use(express.json());
 
+// ✅ MEMORY STORAGE (IMPORTANT)
 const upload = multer({ storage: multer.memoryStorage() });
 
 // ---------------- GOOGLE VISION ----------------
@@ -61,11 +64,11 @@ if (!apiKey) {
 const genAI = new GoogleGenerativeAI(apiKey);
 console.log('✅ Gemini initialized');
 
-// ---------------- OCR + GEMINI FUNCTION ----------------
+// ---------------- GEMINI FUNCTION ----------------
 async function extractMedicinesAndDosages(ocrText) {
     try {
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash"
+            model: "gemini-2.0-flash" // ❌ NOT CHANGED
         });
 
         const prompt = `
@@ -108,6 +111,7 @@ app.post('/upload', upload.single('prescription'), async (req, res) => {
             return res.status(400).send('No file uploaded');
         }
 
+        // ✅ BUFFER BASED OCR (IMPORTANT)
         const [result] = await visionClient.textDetection({
             image: { content: req.file.buffer }
         });
