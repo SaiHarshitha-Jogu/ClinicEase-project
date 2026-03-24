@@ -11,7 +11,7 @@ services:
       - dental-ai
     environment:
       - VITE_BACKEND_URL=http://localhost:3000
-      - VITE_XRAY_API_URL=http://localhost:8080
+      - VITE_XRAY_API_URL=https://clinic-ease-backend.onrender.com
 
   backend:
     build: ./backend
