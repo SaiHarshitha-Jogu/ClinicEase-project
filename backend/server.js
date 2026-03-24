@@ -19,14 +19,13 @@ const __dirname = dirname(__filename);
 dotenv.config();
 
 const app = express();
+const port = process.env.PORT || 3000; // ✅ FIXED
 
 app.use(cors({
   origin: "https://clinic-ease-project-f8v9.vercel.app",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
-
-const server = app.listen(port, "0.0.0.0", () => {
 
 app.use(express.json());
 
@@ -68,7 +67,7 @@ console.log('✅ Gemini initialized');
 async function extractMedicinesAndDosages(ocrText) {
     try {
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash" // ✅ FIXED MODEL
+            model: "gemini-2.0-flash" // ✅ NOT CHANGED
         });
 
         const prompt = `
@@ -150,8 +149,8 @@ app.get('/test', (req, res) => {
     res.json({ message: 'Server working' });
 });
 
-// ---------------- SERVER ----------------
-const server = app.listen(port, () => {
+// ---------------- SERVER (ONLY ONE) ----------------
+const server = app.listen(port, "0.0.0.0", () => {
     console.log(`✅ Server running on port ${port}`);
 
     try {
