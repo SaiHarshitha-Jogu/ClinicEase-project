@@ -21,7 +21,7 @@ const app = express();
 // ✅ IMPORTANT FOR RENDER
 const port = process.env.PORT || 10000;
 
-// ✅ CORS FIX (avoid blocking)
+// ✅ CORS FIX
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -29,7 +29,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// ✅ MEMORY STORAGE (IMPORTANT)
+// ✅ MEMORY STORAGE
 const upload = multer({ storage: multer.memoryStorage() });
 
 // ---------------- GOOGLE VISION ----------------
@@ -68,7 +68,7 @@ console.log('✅ Gemini initialized');
 async function extractMedicinesAndDosages(ocrText) {
     try {
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash" // ❌ NOT CHANGED
+            model: "gemini-2.0-flash"
         });
 
         const prompt = `
@@ -102,7 +102,7 @@ ${ocrText}
     }
 }
 
-// ---------------- UPLOAD ROUTE ----------------
+// ---------------- UPLOAD ROUTE (PRESCRIPTION) ----------------
 app.post('/upload', upload.single('prescription'), async (req, res) => {
     console.log('Received upload');
 
@@ -111,7 +111,6 @@ app.post('/upload', upload.single('prescription'), async (req, res) => {
             return res.status(400).send('No file uploaded');
         }
 
-        // ✅ BUFFER BASED OCR (IMPORTANT)
         const [result] = await visionClient.textDetection({
             image: { content: req.file.buffer }
         });
@@ -121,8 +120,6 @@ app.post('/upload', upload.single('prescription'), async (req, res) => {
         if (!text) {
             return res.status(400).send("No text detected");
         }
-
-        console.log("OCR TEXT:", text);
 
         const extractedData = await extractMedicinesAndDosages(text);
 
@@ -139,6 +136,45 @@ app.post('/upload', upload.single('prescription'), async (req, res) => {
     } catch (error) {
         console.error("Upload error:", error);
         res.status(500).send(error.message);
+    }
+});
+
+
+// ---------------- NEW X-RAY ROUTE ----------------
+app.post('/analyze-xray', upload.single('xray'), async (req, res) => {
+    console.log("Received X-ray upload");
+
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        const base64Image = req.file.buffer.toString("base64");
+
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.0-flash"
+        });
+
+        const result = await model.generateContent([
+            "Analyze this dental X-ray and give findings",
+            {
+                inlineData: {
+                    mimeType: req.file.mimetype,
+                    data: base64Image
+                }
+            }
+        ]);
+
+        const response = await result.response.text();
+
+        res.json({
+            annotatedImageUrl: "uploaded",
+            findings: response
+        });
+
+    } catch (error) {
+        console.error("X-ray error:", error);
+        res.status(500).json({ error: "X-ray analysis failed" });
     }
 });
 
