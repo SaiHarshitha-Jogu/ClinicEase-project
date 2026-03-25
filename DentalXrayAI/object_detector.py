@@ -111,7 +111,7 @@ def analyze_xray_route():
     logger.info(f"Saved annotated image to: {output_path}")
 
     # Return full URL for the image
-    base_url = os.environ.get('BASE_URL', 'http://localhost:8080')
+    base_url = os.environ.get('BASE_URL', 'BASE_URL')
     image_url = f"{base_url}/uploads/annotated_xrays/{output_filename}"
     logger.info(f"Image will be available at: {image_url}")
     
@@ -140,5 +140,5 @@ if __name__ == "__main__":
     logger.info("Server starting...")
     logger.info(f"Upload directory: {UPLOAD_FOLDER}")
     logger.info(f"Result directory: {RESULT_FOLDER}")
-    port = int(os.environ.get('PORT', 8080))
+    port = int(os.environ.get('PORT', 10000))
     serve(app, host='0.0.0.0', port=port, threads=4)
