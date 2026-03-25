@@ -29,7 +29,7 @@ function ClinicPortal() {
     formData.append("image_file", file);
 
     try {
-      const res = await fetch("https://clinic-ease-backend.onrender.com/analyze-xray", {
+      const res = await fetch("https://clinic-ease-backend.onrender.com/upload", {
         method: "POST",
         body: formData,
       });
