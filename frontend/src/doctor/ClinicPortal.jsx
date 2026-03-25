@@ -26,14 +26,15 @@ function ClinicPortal() {
 
     setUploading(true);
     const formData = new FormData();
-    formData.append("prescription", file);
+    formData.append("xray", file);
 
     try {
-      const res = await fetch("https://clinic-ease-backend.onrender.com/upload", {
+      const res = await fetch("https://clinic-ease-backend.onrender.com/analyze-xray", {
         method: "POST",
         body: formData,
       });
       const data = await res.json();
+      console.log("Xray Response:", data);
 
       // Store separate analysis doc
       await addDoc(collection(db, "XrayAnalyses"), {
