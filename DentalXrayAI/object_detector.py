@@ -111,7 +111,7 @@ def analyze_xray_route():
     logger.info(f"Saved annotated image to: {output_path}")
 
     # Return full URL for the image
-    base_url = os.environ.get('BASE_URL', 'BASE_URL')
+    base_url = os.environ.get('BASE_URL', 'http://localhost:10000')
     image_url = f"{base_url}/uploads/annotated_xrays/{output_filename}"
     logger.info(f"Image will be available at: {image_url}")
     
