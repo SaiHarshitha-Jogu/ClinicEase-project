@@ -26,7 +26,7 @@ function ClinicPortal() {
 
     setUploading(true);
     const formData = new FormData();
-    formData.append("image_file", file);
+    formData.append("prescription", file);
 
     try {
       const res = await fetch("https://clinic-ease-backend.onrender.com/upload", {
