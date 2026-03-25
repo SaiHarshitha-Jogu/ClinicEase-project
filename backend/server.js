@@ -139,44 +139,8 @@ app.post('/upload', upload.single('prescription'), async (req, res) => {
     }
 });
 
-
-// ---------------- NEW X-RAY ROUTE ----------------
-app.post('/analyze-xray', upload.single('xray'), async (req, res) => {
-    console.log("Received X-ray upload");
-
-    try {
-        if (!req.file) {
-            return res.status(400).json({ error: "No file uploaded" });
-        }
-
-        const base64Image = req.file.buffer.toString("base64");
-
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash"
-        });
-
-        const result = await model.generateContent([
-            "Analyze this dental X-ray and give findings",
-            {
-                inlineData: {
-                    mimeType: req.file.mimetype,
-                    data: base64Image
-                }
-            }
-        ]);
-
-        const response = await result.response.text();
-
-        res.json({
-            annotatedImageUrl: "uploaded",
-            findings: response
-        });
-
-    } catch (error) {
-        console.error("X-ray error:", error);
-        res.status(500).json({ error: "X-ray analysis failed" });
-    }
-});
+// ❌ REMOVED WRONG GEMINI X-RAY ROUTE
+// 👉 X-ray should be handled by Python service ONLY
 
 // ---------------- TEST ROUTE ----------------
 app.get('/test', (req, res) => {
