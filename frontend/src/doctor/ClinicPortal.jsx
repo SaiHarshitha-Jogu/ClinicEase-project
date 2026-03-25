@@ -26,10 +26,10 @@ function ClinicPortal() {
 
     setUploading(true);
     const formData = new FormData();
-    formData.append("xray", file);
+    formData.append("image_file", file);
 
     try {
-      const res = await fetch("https://clinic-ease-backend.onrender.com/analyze-xray", {
+      const res = await fetch("https://YOUR-PYTHON-SERVICE.onrender.com/analyze-xray", {
         method: "POST",
         body: formData,
       });
