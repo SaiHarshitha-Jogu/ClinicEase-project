@@ -17,14 +17,8 @@ BASE_DIR = Path(__file__).parent.parent.absolute()
 
 app = Flask(__name__)
 
-# CORS
-CORS(app, resources={
-    r"/*": {
-        "origins": "*",
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"]
-    }
-})
+# ✅ FIXED CORS (allow your frontend)
+CORS(app, resources={r"/*": {"origins": "https://clinic-ease-project-f8v9.vercel.app"}})
 
 # Load model
 model = YOLO("best.pt")
@@ -64,7 +58,6 @@ def detect_objects_on_image(buf):
 
 # ---------------- ANALYSIS ----------------
 def analyze_xray(filepath):
-    # OPTIONAL SPEED BOOST (resize)
     img = Image.open(filepath).convert("RGB").resize((640, 640))
 
     results = model.predict(img)
@@ -95,11 +88,10 @@ def analyze_xray(filepath):
 # ---------------- API ----------------
 @app.route('/analyze-xray', methods=['POST', 'OPTIONS'])
 def analyze_xray_route():
+
+    # ✅ FIXED OPTIONS
     if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        return response
+        return '', 204
 
     if 'image_file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
@@ -118,28 +110,22 @@ def analyze_xray_route():
     output_image.save(output_path)
     logger.info(f"Saved annotated image: {output_path}")
 
-    # ✅ FIXED URL (AUTO-DETECT RENDER URL)
-    image_url = request.host_url + "uploads/annotated_xrays/" + output_filename
+    # ✅ FIXED HTTPS URL
+    image_url = request.host_url.replace("http://", "https://") + "uploads/annotated_xrays/" + output_filename
 
-    response = jsonify({
+    return jsonify({
         "annotatedImageUrl": image_url,
         "findings": findings
     })
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
 
 # ---------------- SERVE FILES ----------------
 @app.route('/uploads/annotated_xrays/<filename>')
 def serve_annotated_file(filename):
-    response = send_from_directory(RESULT_FOLDER, filename)
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return send_from_directory(RESULT_FOLDER, filename)
 
 @app.route('/uploads/xrays/<filename>')
 def serve_original_file(filename):
-    response = send_from_directory(UPLOAD_FOLDER, filename)
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 # ---------------- START SERVER ----------------
 if __name__ == "__main__":
