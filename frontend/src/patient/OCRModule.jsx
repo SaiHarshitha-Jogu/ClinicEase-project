@@ -18,7 +18,6 @@ function OCRModule() {
   const [copiedIndex, setCopiedIndex] = useState(null);
   const navigate = useNavigate();
 
-  // Check if user is logged in
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
@@ -48,7 +47,6 @@ function OCRModule() {
     formData.append("prescription", selectedFile);
 
     try {
-      // First verify user is logged in
       const user = auth.currentUser;
       if (!user) {
         toast.error("Please log in to save medicines");
@@ -58,7 +56,8 @@ function OCRModule() {
 
       console.log("Uploading prescription for user:", user.uid);
 
-      const response = await fetch("http://localhost:3000/upload", {
+      // ✅ ONLY CHANGE HERE
+      const response = await fetch("https://clinic-ease-backend.onrender.com/upload", {
         method: "POST",
         body: formData,
       });
@@ -77,7 +76,6 @@ function OCRModule() {
 
       setOutput(result.medicines);
 
-      // Format the medicines data with additional fields
       const medicinesList = result.medicines.map(med => ({
         name: med.name?.trim() || 'Unknown Medicine',
         dosage: med.dosage?.trim() || 'No dosage specified',
@@ -86,7 +84,6 @@ function OCRModule() {
         instructions: med.instructions?.trim() || 'No special instructions'
       }));
 
-      // Create the medicines document
       const medicineData = {
         userId: user.uid,
         userEmail: user.email,
@@ -97,7 +94,6 @@ function OCRModule() {
 
       console.log("Attempting to save medicine data:", medicineData);
       
-      // Save to Firebase
       const docRef = await addDoc(collection(db, "medicines"), medicineData);
       console.log("Medicines saved with ID:", docRef.id);
       
@@ -178,14 +174,12 @@ function OCRModule() {
                     <div key={index} className="medicine-card">
                       <div className="medicine-card__header">
                         <div className="medicine-title">{med.name || 'Unknown Medicine'}</div>
-                        <button type="button" className="icon-button" onClick={() => handleCopy(med, index)} aria-label="Copy medicine details">
+                        <button type="button" className="icon-button" onClick={() => handleCopy(med, index)}>
                           {copiedIndex === index ? <CheckCircle2 size={18} /> : <Clipboard size={18} />}
                         </button>
                       </div>
                       <div className="medicine-badges">
-                        {med.dosage && (
-                          <span className="badge badge--dosage">{med.dosage}</span>
-                        )}
+                        {med.dosage && <span className="badge badge--dosage">{med.dosage}</span>}
                         <span className="badge badge--timing">{med.timing || 'Timing not specified'}</span>
                         <span className="badge badge--frequency">{med.frequency || 'Frequency not specified'}</span>
                       </div>
