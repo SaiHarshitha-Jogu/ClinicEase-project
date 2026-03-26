@@ -1,258 +1,93 @@
-import React, { useState, useEffect } from "react";
-import { db, auth } from "../firebase/firebase";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
-import Navbar1 from "./navbar1";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
-
-import "./OCRModule.css";
-import { Upload, Clipboard, CheckCircle2 } from "lucide-react";
+import React, { useState } from "react";
 
 function OCRModule() {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [output, setOutput] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [fileName, setFileName] = useState("No file chosen");
-  const [copiedIndex, setCopiedIndex] = useState(null);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
 
-  // Check if user is logged in
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (!user) {
-        toast.error("Please log in to use this feature");
-        navigate("/login", { replace: true });
-      }
+  // ✅ Image Compression (ADDED)
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const scale = 0.5;
+
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          canvas.toBlob((blob) => {
+            resolve(new File([blob], file.name, { type: "image/jpeg" }));
+          }, "image/jpeg", 0.6);
+        };
+      };
     });
-
-    return () => unsubscribe();
-  }, [navigate]);
-
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    setSelectedFile(file);
-    setFileName(file ? file.name : "No file chosen");
   };
 
-  const handleUpload = async (event) => {
-    event.preventDefault();
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-    if (!selectedFile) {
-      toast.error("Please select a file first");
-      return;
-    }
-
-    setIsUploading(true);
-
-    const formData = new FormData();
-    formData.append("prescription", selectedFile);
+    setLoading(true);
 
     try {
-      const user = auth.currentUser;
+      // ✅ Wake up backend
+      await fetch("https://clinic-ease-backend.onrender.com/");
 
-      if (!user) {
-        toast.error("Please log in to save medicines");
-        navigate("/login", { replace: true });
-        return;
-      }
+      // ✅ Compress image
+      const compressedFile = await compressImage(file);
 
-      console.log("Uploading prescription for user:", user.uid);
+      const formData = new FormData();
+      formData.append("file", compressedFile);
 
-      // ✅ FIXED LINE
-      const API_URL = "https://clinic-ease-backend.onrender.com";
+      // ✅ API Call (UPDATED URL)
+      const res = await fetch(
+        "https://clinic-ease-backend.onrender.com/upload-prescription",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
-      const response = await fetch(`${API_URL}/upload`, {
-        method: "POST",
-        body: formData,
-      });
+      const data = await res.json();
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to process image: ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log("Extracted medicine data:", result);
-
-      if (!result.medicines || !Array.isArray(result.medicines)) {
-        throw new Error("Invalid medicine data received");
-      }
-
-      setOutput(result.medicines);
-
-      const medicinesList = result.medicines.map((med) => ({
-        name: med.name?.trim() || "Unknown Medicine",
-        dosage: med.dosage?.trim() || "No dosage specified",
-        timing: med.timing?.trim() || "Timing not specified",
-        frequency: med.frequency?.trim() || "Frequency not specified",
-        instructions: med.instructions?.trim() || "No special instructions",
-      }));
-
-      const medicineData = {
-        userId: user.uid,
-        userEmail: user.email,
-        medicines: medicinesList,
-        createdAt: Timestamp.now(),
-        fileName: selectedFile.name,
-      };
-
-      console.log("Attempting to save medicine data:", medicineData);
-
-      const docRef = await addDoc(collection(db, "medicines"), medicineData);
-      console.log("Medicines saved with ID:", docRef.id);
-
-      toast.success("Medicines saved successfully!");
+      console.log("Extracted medicine data:", data);
+      setResult(data);
     } catch (error) {
-      console.error("Error:", error);
-      setOutput(error.message);
-      toast.error(error.message);
-    } finally {
-      setIsUploading(false);
+      console.error("Upload failed:", error);
+      alert("Upload failed!");
     }
-  };
 
-  const handleCopy = (med, index) => {
-    const text = `Medicine: ${med.name}
-Dosage: ${med.dosage}
-Timing: ${med.timing || "Not specified"}
-Frequency: ${med.frequency || "Not specified"}${
-      med.instructions ? `\nInstructions: ${med.instructions}` : ""
-    }`;
-
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        setCopiedIndex(index);
-        toast.success("Copied to clipboard");
-        setTimeout(() => setCopiedIndex(null), 1500);
-      })
-      .catch(() => toast.error("Failed to copy"));
+    setLoading(false);
   };
 
   return (
-    <div className="ocr-module">
-      <Navbar1 />
+    <div style={{ padding: "20px" }}>
+      <h2>Upload Prescription</h2>
 
-      <div className="ocr-container">
-        <div className="upload-section">
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileUpload}
+        disabled={loading}
+      />
 
-          <div className="upload-header">
-            <h1>Upload Prescription</h1>
-            <p>Select an image of your prescription to extract medicine details</p>
-          </div>
+      {loading && <p>Processing... please wait ⏳</p>}
 
-          <form onSubmit={handleUpload} className="upload-form">
-
-            <div className="file-input-container">
-              <input
-                type="file"
-                id="prescription"
-                accept="image/*"
-                onChange={handleFileChange}
-                required
-                disabled={isUploading}
-                className="file-input"
-              />
-
-              <label htmlFor="prescription" className="file-label">
-                <Upload size={20} />
-                <span>Choose File</span>
-              </label>
-
-              <span className="file-name">{fileName}</span>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isUploading || !selectedFile}
-              className={`upload-button ${
-                isUploading || !selectedFile ? "disabled" : ""
-              }`}
-            >
-              {isUploading ? (
-                <>
-                  <div className="loading-spinner"></div>
-                  <span>Processing...</span>
-                </>
-              ) : (
-                "Upload Prescription"
-              )}
-            </button>
-          </form>
-
-          {output && (
-            <div className="results-section">
-
-              <div className="results-header">
-                <h2>Extracted Medicine Details</h2>
-                {Array.isArray(output) && (
-                  <span className="results-count">{output.length} items</span>
-                )}
-              </div>
-
-              <div className="medicines-list grid">
-                {Array.isArray(output) ? (
-                  output.map((med, index) => (
-                    <div key={index} className="medicine-card">
-
-                      <div className="medicine-card__header">
-                        <div className="medicine-title">
-                          {med.name || "Unknown Medicine"}
-                        </div>
-
-                        <button
-                          type="button"
-                          className="icon-button"
-                          onClick={() => handleCopy(med, index)}
-                        >
-                          {copiedIndex === index ? (
-                            <CheckCircle2 size={18} />
-                          ) : (
-                            <Clipboard size={18} />
-                          )}
-                        </button>
-                      </div>
-
-                      <div className="medicine-badges">
-                        {med.dosage && (
-                          <span className="badge badge--dosage">
-                            {med.dosage}
-                          </span>
-                        )}
-
-                        <span className="badge badge--timing">
-                          {med.timing || "Timing not specified"}
-                        </span>
-
-                        <span className="badge badge--frequency">
-                          {med.frequency || "Frequency not specified"}
-                        </span>
-                      </div>
-
-                      {med.instructions && (
-                        <div className="medicine-instructions">
-                          <span className="instructions-label">
-                            Instructions
-                          </span>
-                          <p className="instructions-text">
-                            {med.instructions}
-                          </p>
-                        </div>
-                      )}
-
-                    </div>
-                  ))
-                ) : (
-                  <p className="error-message">{output}</p>
-                )}
-              </div>
-
-            </div>
-          )}
-
+      {result && (
+        <div>
+          <h3>Extracted Data:</h3>
+          <pre>{JSON.stringify(result, null, 2)}</pre>
         </div>
-      </div>
+      )}
     </div>
   );
 }
