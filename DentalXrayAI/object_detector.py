@@ -1,5 +1,5 @@
 from ultralytics import YOLO
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from waitress import serve
 from PIL import Image, ImageDraw, ImageFont
@@ -8,31 +8,31 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-# Set up logging
+# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Get the absolute path of the project's root directory (ClinicEaseUnified)
+# Base directory
 BASE_DIR = Path(__file__).parent.parent.absolute()
 
 app = Flask(__name__)
 
-# Enable CORS for all routes and all origins
+# CORS
 CORS(app, resources={
     r"/*": {
-        "origins": "*",  # Allow all origins for development
+        "origins": "*",
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"]
     }
 })
 
+# Load model
 model = YOLO("best.pt")
 
-# Define upload and result folders
+# Folders
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads', 'xrays')
 RESULT_FOLDER = os.path.join(BASE_DIR, 'uploads', 'annotated_xrays')
 
-# Create directories if they don't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(RESULT_FOLDER, exist_ok=True)
 
@@ -43,6 +43,7 @@ logger.info(f"Result folder: {RESULT_FOLDER}")
 def root():
     return "Dental X-ray Analysis API is running!"
 
+# ---------------- DETECTION ----------------
 @app.route("/detect", methods=["POST"])
 def detect():
     buf = request.files["image_file"]
@@ -61,11 +62,15 @@ def detect_objects_on_image(buf):
         output.append([x1, y1, x2, y2, result.names[class_id], prob_percentage])
     return output
 
+# ---------------- ANALYSIS ----------------
 def analyze_xray(filepath):
-    results = model.predict(filepath)
+    # OPTIONAL SPEED BOOST (resize)
+    img = Image.open(filepath).convert("RGB").resize((640, 640))
+
+    results = model.predict(img)
     result = results[0]
+
     findings = []
-    img = Image.open(filepath).convert("RGB")
     draw = ImageDraw.Draw(img)
     font = ImageFont.load_default()
 
@@ -87,6 +92,7 @@ def analyze_xray(filepath):
 
     return img, findings
 
+# ---------------- API ----------------
 @app.route('/analyze-xray', methods=['POST', 'OPTIONS'])
 def analyze_xray_route():
     if request.method == 'OPTIONS':
@@ -99,46 +105,44 @@ def analyze_xray_route():
         return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files['image_file']
+
     filename = f"xray_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
-    logger.info(f"Saved uploaded file to: {filepath}")
+    logger.info(f"Saved uploaded file: {filepath}")
 
     output_image, findings = analyze_xray(filepath)
+
     output_filename = f"annotated_{filename}"
     output_path = os.path.join(RESULT_FOLDER, output_filename)
     output_image.save(output_path)
-    logger.info(f"Saved annotated image to: {output_path}")
+    logger.info(f"Saved annotated image: {output_path}")
 
-    # Return full URL for the image
-    base_url = os.environ.get('BASE_URL', 'https://clinic-ease-xray.onrender.com')
-    image_url = f"{base_url}/uploads/annotated_xrays/{output_filename}"
-    logger.info(f"Image will be available at: {image_url}")
-    
+    # ✅ FIXED URL (AUTO-DETECT RENDER URL)
+    image_url = request.host_url + "uploads/annotated_xrays/" + output_filename
+
     response = jsonify({
-        "annotatedImageUrl": image_url,    
+        "annotatedImageUrl": image_url,
         "findings": findings
     })
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
+# ---------------- SERVE FILES ----------------
 @app.route('/uploads/annotated_xrays/<filename>')
 def serve_annotated_file(filename):
-    logger.info(f"Serving annotated file: {filename} from {RESULT_FOLDER}")
     response = send_from_directory(RESULT_FOLDER, filename)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 @app.route('/uploads/xrays/<filename>')
 def serve_original_file(filename):
-    logger.info(f"Serving original file: {filename} from {UPLOAD_FOLDER}")
     response = send_from_directory(UPLOAD_FOLDER, filename)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
+# ---------------- START SERVER ----------------
 if __name__ == "__main__":
     logger.info("Server starting...")
-    logger.info(f"Upload directory: {UPLOAD_FOLDER}")
-    logger.info(f"Result directory: {RESULT_FOLDER}")
     port = int(os.environ.get('PORT', 10000))
     serve(app, host='0.0.0.0', port=port, threads=4)
