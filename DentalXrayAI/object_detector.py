@@ -130,5 +130,5 @@ def serve_original_file(filename):
 # ---------------- START SERVER ----------------
 if __name__ == "__main__":
     logger.info("Server starting...")
-    port = int(os.environ.get('PORT', 10000))
-    serve(app, host='0.0.0.0', port=port, threads=4)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
