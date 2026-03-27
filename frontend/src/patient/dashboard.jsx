@@ -242,7 +242,9 @@ function Dashboard() {
     try {
       const amountInPaise = Math.max(100, Math.round((appointment.amount || 500) * 100));
       // 1) Create order on backend
-      const orderRes = await fetch(`${apiBase}/create-razorpay-order`, {
+      await fetch("https://clinic-ease-backend.onrender.com/"); // wake-up
+
+        const orderRes = await fetch("https://clinic-ease-backend.onrender.com/create-razorpay-order", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
