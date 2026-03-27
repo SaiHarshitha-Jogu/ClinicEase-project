@@ -7,6 +7,20 @@ import os
 import logging
 from datetime import datetime
 from pathlib import Path
+import firebase_admin
+from firebase_admin import credentials, storage
+import json
+
+# Firebase initialization from Render ENV
+firebase_json = os.environ.get("FIREBASE_KEY")
+cred_dict = json.loads(firebase_json)
+
+cred = credentials.Certificate(cred_dict)
+firebase_admin.initialize_app(cred, {
+    "storageBucket": "clinicmanagementsoftware-a6f78.appspot.com"
+})
+
+bucket = storage.bucket()
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +30,7 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).parent.absolute()
 
 app = Flask(__name__)
+
 @app.after_request
 def apply_cors_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "https://clinic-ease-project-f8v9.vercel.app"
@@ -23,21 +38,17 @@ def apply_cors_headers(response):
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
     return response
 
-# ✅ FIXED CORS (allow your frontend)
 CORS(app)
 
 # Load model
 model = YOLO("best.pt")
 
-# Folders
+# (kept but not used now - safe to keep)
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads', 'xrays')
 RESULT_FOLDER = os.path.join(BASE_DIR, 'uploads', 'annotated_xrays')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(RESULT_FOLDER, exist_ok=True)
-
-logger.info(f"Upload folder: {UPLOAD_FOLDER}")
-logger.info(f"Result folder: {RESULT_FOLDER}")
 
 @app.route("/")
 def root():
@@ -95,7 +106,6 @@ def analyze_xray(filepath):
 @app.route('/analyze-xray', methods=['POST', 'OPTIONS'])
 def analyze_xray_route():
 
-    # ✅ FIXED OPTIONS
     if request.method == 'OPTIONS':
         return '', 204
 
@@ -103,28 +113,38 @@ def analyze_xray_route():
         return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files['image_file']
-
     filename = f"xray_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
-    file.save(filepath)
-    logger.info(f"Saved uploaded file: {filepath}")
 
-    output_image, findings = analyze_xray(filepath)
+    from io import BytesIO
 
+    # -------- Upload original to Firebase --------
+    blob_xray = bucket.blob(f"xrays/{filename}")
+    blob_xray.upload_from_file(file)
+    blob_xray.make_public()
+
+    # -------- Process image (your logic unchanged) --------
+    file.stream.seek(0)
+    output_image, findings = analyze_xray(file.stream)
+
+    # -------- Upload annotated image --------
     output_filename = f"annotated_{filename}"
-    output_path = os.path.join(RESULT_FOLDER, output_filename)
-    output_image.save(output_path)
-    logger.info(f"Saved annotated image: {output_path}")
 
-    # ✅ FIXED HTTPS URL
-    image_url = request.host_url.replace("http://", "https://") + "uploads/annotated_xrays/" + output_filename
+    img_byte_arr = BytesIO()
+    output_image.save(img_byte_arr, format='JPEG')
+    img_byte_arr.seek(0)
+
+    blob_annotated = bucket.blob(f"annotated_xrays/{output_filename}")
+    blob_annotated.upload_from_file(img_byte_arr, content_type='image/jpeg')
+    blob_annotated.make_public()
+
+    image_url = blob_annotated.public_url
 
     return jsonify({
         "annotatedImageUrl": image_url,
         "findings": findings
     })
 
-# ---------------- SERVE FILES ----------------
+# ---------------- SERVE FILES (optional, not used now) ----------------
 @app.route('/uploads/annotated_xrays/<filename>')
 def serve_annotated_file(filename):
     return send_from_directory(RESULT_FOLDER, filename)
