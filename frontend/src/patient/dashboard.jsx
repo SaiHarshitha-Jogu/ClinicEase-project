@@ -31,7 +31,7 @@ function Dashboard() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [calendarDays, setCalendarDays] = useState([]);
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const apiBase = import.meta.env.VITE_API_BASE;
+  const apiBase = "https://clinicease-project-il0j.onrender.com";
   const [approvedXrays, setApprovedXrays] = useState([]);
 
   const [xrayResults, setXrayResults] = useState([]);
