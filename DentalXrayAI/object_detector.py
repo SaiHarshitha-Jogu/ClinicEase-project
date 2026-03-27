@@ -33,12 +33,12 @@ app = Flask(__name__)
 
 @app.after_request
 def apply_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "https://clinic-ease-project-f8v9.vercel.app"
+    response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
     return response
 
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Load model
 model = YOLO("best.pt")
@@ -74,8 +74,8 @@ def detect_objects_on_image(buf):
     return output
 
 # ---------------- ANALYSIS ----------------
-def analyze_xray(filepath):
-    img = Image.open(filepath).convert("RGB").resize((640, 640))
+def analyze_xray(image):
+    img = image.convert("RGB").resize((640, 640))
 
     results = model.predict(img, imgsz=320, conf=0.5)
     result = results[0]
@@ -124,7 +124,8 @@ def analyze_xray_route():
 
     # -------- Process image (your logic unchanged) --------
     file.stream.seek(0)
-    output_image, findings = analyze_xray(file.stream)
+    image = Image.open(file.stream)
+    output_image, findings = analyze_xray(image)
 
     # -------- Upload annotated image --------
     output_filename = f"annotated_{filename}"
@@ -157,4 +158,4 @@ def serve_original_file(filename):
 if __name__ == "__main__":
     logger.info("Server starting...")
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    serve(app,host="0.0.0.0", port=port)
