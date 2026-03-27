@@ -55,6 +55,8 @@ function OCRModule() {
       }
 
       console.log("Uploading prescription for user:", user.uid);
+      await fetch("https://clinic-ease-backend.onrender.com/");
+
 
       // ✅ ONLY CHANGE HERE
       const response = await fetch("https://clinic-ease-backend.onrender.com/upload", {
