@@ -16,9 +16,15 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).parent.absolute()
 
 app = Flask(__name__)
+@app.after_request
+def apply_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "https://clinic-ease-project-f8v9.vercel.app"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    return response
 
 # ✅ FIXED CORS (allow your frontend)
-CORS(app, resources={r"/*": {"origins": "https://clinic-ease-project-f8v9.vercel.app"}})
+CORS(app)
 
 # Load model
 model = YOLO("best.pt")
@@ -60,7 +66,7 @@ def detect_objects_on_image(buf):
 def analyze_xray(filepath):
     img = Image.open(filepath).convert("RGB").resize((640, 640))
 
-    results = model.predict(img)
+    results = model.predict(img, imgsz=320, conf=0.5)
     result = results[0]
 
     findings = []
