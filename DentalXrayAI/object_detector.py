@@ -17,7 +17,7 @@ cred_dict = json.loads(firebase_json)
 
 cred = credentials.Certificate(cred_dict)
 firebase_admin.initialize_app(cred, {
-    "storageBucket": "clinic-ease-firebase.appspot.com"
+    "storageBucket": "clinic-ease-firebase.firebasestorage.app"
 })
 
 bucket = storage.bucket()
@@ -119,7 +119,8 @@ def analyze_xray_route():
 
     # -------- Upload original to Firebase --------
     blob_xray = bucket.blob(f"xrays/{filename}")
-    blob_xray.upload_from_file(file)
+    file.stream.seek(0)
+    blob_xray.upload_from_file(file.stream, content_type=file.content_type)
     blob_xray.make_public()
 
     # -------- Process image (your logic unchanged) --------
