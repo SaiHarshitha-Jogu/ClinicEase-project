@@ -33,7 +33,15 @@ const handleXrayUpload = async (e, appointmentId, patientName, uid) => {
       method: "POST",
       body: formData,
     });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Backend error:", text);
+      alert("Server error! Please try again.");
+      setUploading(false);
+      return;
+    }
     const data = await res.json();
+
   
     await addDoc(collection(db, "XrayAnalyses"), {
       appointmentId,
