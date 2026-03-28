@@ -33,17 +33,8 @@ const handleXrayUpload = async (e, appointmentId, patientName, uid) => {
       method: "POST",
       body: formData,
     });
-  if (!res.ok) {
-  const text = await res.text();
-  console.error("Backend error:", text);
-  alert("Server error! Using demo mode...");
-
-  // ✅ fallback for demo
-  const fakeData = {
-    annotatedImageUrl: URL.createObjectURL(file),
-    findings: [{ label: "Demo Result", confidence: "100%" }]
-  };
-
+    const data = await res.json();
+  
     await addDoc(collection(db, "XrayAnalyses"), {
       appointmentId,
       userId :uid,
@@ -61,7 +52,7 @@ const handleXrayUpload = async (e, appointmentId, patientName, uid) => {
     alert("Upload failed!");
   }
   setUploading(false);
-  return
+
 };
 
 
