@@ -17,7 +17,7 @@ cred_dict = json.loads(firebase_json)
 
 cred = credentials.Certificate(cred_dict)
 firebase_admin.initialize_app(cred, {
-    "storageBucket": "clinicmanagementsoftware-a6f78.appspot.com"
+    "storageBucket": "clinic-ease-firebase.appspot.com"
 })
 
 bucket = storage.bucket()
