@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import cors from "cors";
 import { config } from './config.js';
+import Razorpay from "razorpay";
 import { initializeReminderScheduler } from './src/server/reminderScheduler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -63,6 +64,11 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey);
 console.log('✅ Gemini initialized');
+const razorpay = new Razorpay({
+    key_id: config.RAZORPAY_KEY_ID,
+    key_secret: config.RAZORPAY_KEY_SECRET
+});
+console.log('✅ Razorpay initialized');
 
 // ---------------- GEMINI FUNCTION ----------------
 async function extractMedicinesAndDosages(ocrText) {
@@ -141,6 +147,25 @@ app.post('/upload', upload.single('prescription'), async (req, res) => {
 
 // ❌ REMOVED WRONG GEMINI X-RAY ROUTE
 // 👉 X-ray should be handled by Python service ONLY
+// ---------------- RAZORPAY ORDER ROUTE ----------------
+app.post("/create-razorpay-order", async (req, res) => {
+    try {
+        const { amount } = req.body; // amount in INR
+        if (!amount) return res.status(400).json({ error: "Amount is required" });
+
+        const options = {
+            amount: amount * 100, // convert to paise
+            currency: "INR"
+        };
+
+        const order = await razorpay.orders.create(options);
+        res.json(order);
+
+    } catch (err) {
+        console.error("Razorpay order error:", err);
+        res.status(500).json({ error: "Failed to create order" });
+    }
+});
 
 // ---------------- TEST ROUTE ----------------
 app.get('/test', (req, res) => {
