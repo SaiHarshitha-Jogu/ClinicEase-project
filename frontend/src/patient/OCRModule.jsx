@@ -59,7 +59,7 @@ function OCRModule() {
 
 
       // ✅ ONLY CHANGE HERE
-      const response = await fetch("https://clinic-ease-backend.onrender.com/upload", {
+      const response = await fetch("https://clinic-ease-backend-new.onrender.com/upload", {
         method: "POST",
         body: formData,
       });
