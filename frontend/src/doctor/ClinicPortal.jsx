@@ -1,4 +1,4 @@
-```javascript
+
 import React, { useEffect, useState } from "react";
 import { db } from  "../firebase/firebase"; 
 import { collection, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore"; 
@@ -9,6 +9,8 @@ import "./clinicportal.css";
 import { auth } from "../firebase/firebase";
 import { sendAppointmentCancellationEmail } from "../utils/emailService.js"; 
 
+
+
 function ClinicPortal() {
   const [appointments, setAppointments] = useState([]); 
   const [selectedDate, setSelectedDate] = useState(new Date()); 
@@ -18,48 +20,52 @@ function ClinicPortal() {
   const [uploading, setUploading] = useState(false);
   const [showCancelView, setShowCancelView] = useState(false);
 
-  const handleXrayUpload = async (e, appointmentId, patientName, uid) => {
-    const file = e.target.files[0];
-    if (!file) return;
+const handleXrayUpload = async (e, appointmentId, patientName, uid) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("image_file", file);
+  setUploading(true);
+  const formData = new FormData();
+  formData.append("image_file", file);
 
-    try {
-      const res = await fetch("https://clinic-ease-backend-new.onrender.com/analyze-xray", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("Backend error:", text);
-        alert("Server error! Please try again.");
-        setUploading(false);
-        return;
-      }
-
-      const data = await res.json();
-
-      await addDoc(collection(db, "XrayAnalyses"), {
-        appointmentId,
-        userId: uid,
-        patientName,
-        doctorName: "manjunath",
-        annotatedImageUrl: data.annotatedImageUrl,
-        findings: data.findings,
-        status: "pending",
-        createdAt: new Date(),
-      });
-
-      alert("X-ray uploaded and sent to doctor for review!");
-    } catch (err) {
-      console.error(err);
-      alert("Upload failed!");
+  try {
+    const res = await fetch("https://clinicease-project-il0j.onrender.com/analyze-xray", {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Backend error:", text);
+      alert("Server error! Please try again.");
+      setUploading(false);
+      return;
     }
-    setUploading(false);
-  };
+    const data = await res.json();
+
+  
+    await addDoc(collection(db, "XrayAnalyses"), {
+      appointmentId,
+      userId :uid,
+      patientName,
+      doctorName: "manjunath",
+      annotatedImageUrl: data.annotatedImageUrl,
+      findings: data.findings,
+      status: "pending",
+      createdAt: new Date(),
+    });
+
+    alert("X-ray uploaded and sent to doctor for review!");
+  } catch (err) {
+    console.error(err);
+    alert("Upload failed!");
+  }
+  setUploading(false);
+
+};
+
+
+
+
 
   const handleLogout = async () => {
     try {
@@ -84,6 +90,7 @@ function ClinicPortal() {
           }));
           setAppointments(allAppointments);
         } else {
+          console.log("No appointments found.");
           setAppointments([]);
         }
       } catch (error) {
@@ -106,24 +113,46 @@ function ClinicPortal() {
       try {
         await deleteDoc(doc(db, "Appointments", appointmentId));
         
+        // Send cancellation email if patient email is available
         if (appointmentDetails.email) {
-          await sendAppointmentCancellationEmail({
+          const emailSent = await sendAppointmentCancellationEmail({
             name: appointmentDetails.name,
             email: appointmentDetails.email,
             date: appointmentDetails.date,
             time: appointmentDetails.time,
             doctorName: appointmentDetails.doctorName || "Dr. Manjunath"
           });
+          
+          if (emailSent) {
+            console.log("Cancellation email sent successfully");
+          } else {
+            console.log("Failed to send cancellation email");
+          }
         }
         
+        // Remove from local state
         setAppointments(appointments.filter(apt => apt.id !== appointmentId));
         setFilteredAppointments(filteredAppointments.filter(apt => apt.id !== appointmentId));
         alert("Appointment cancelled successfully!");
       } catch (error) {
         console.error("Error cancelling appointment:", error);
-        alert("Failed to cancel appointment.");
+        alert("Failed to cancel appointment. Please try again.");
       }
     }
+  };
+
+  const getFutureAppointments = () => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    return appointments
+      .map((apt) => {
+        const date = new Date(apt.date);
+        date.setHours(0, 0, 0, 0);
+        return { ...apt, dateObj: date };
+      })
+      .filter((apt) => apt.dateObj >= now)
+      .sort((a, b) => a.dateObj - b.dateObj);
   };
 
   const handleSearch = () => {
@@ -135,51 +164,202 @@ function ClinicPortal() {
     setSearched(true);
   };
 
+  const getWeekAppointments = () => {
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  
+    const weekDays = [];
+  
+    for (let i = 0; i < 7; i++) {
+      const current = new Date(startOfWeek);
+      current.setDate(startOfWeek.getDate() + i);
+  
+      const formatted = formatDate(current);
+      const count = appointments.filter(app => app.date === formatted).length;
+  
+      weekDays.push({
+        displayDate: `${current.getMonth() + 1}/${current.getDate()}`, // 3/12
+        weekday: current.toLocaleDateString("en-US", { weekday: "long" }), // Tuesday
+        count,
+      });
+    }
+  
+    return weekDays;
+  };
+  
+  
+  const getColorClass = (count) => {
+    if (count <= 5) return "green";
+    if (count <= 10) return "yellow";
+    return "red";
+  };
+  
+
   return (
     <div>
-      <nav className="navbar">
+       <nav className="navbar">
         <ul className="navbar-links">
-          <li><a href="/patientinfoclinic">Patient Info</a></li>
-          <li><a href="/clinicportal">Appointments</a></li>
-          <li><a href="#cancel">Cancel Appointments</a></li>
-          <li><a href="#logout" onClick={handleLogout}>Logout</a></li>
+          <li>
+            <a href="/patientinfoclinic" onClick={() => navigate("/patientinfoclinic")}>
+              Patient Info
+            </a>
+          </li>
+          <li>
+          <a href="/clinicportal" onClick={(e) => { e.preventDefault(); setShowCancelView(false); }}>
+            Appointments</a>
+          </li>
+          <li>
+            <a href="#cancel" onClick={(e) => { e.preventDefault(); setShowCancelView(true); }}>
+              Cancel Appointments
+            </a>
+          </li>
+          
+          
+          <li>
+            <a href="#logout" onClick={handleLogout}>
+              Logout
+            </a>
+          </li>
         </ul>
       </nav>
 
-      <main className="content-wrapper">
-        <div className="clinic-portal">
-          <h1>Clinic Portal</h1>
+      <div className="top-banner">
+  <h2><center>
+ Appointments Today: {
+    appointments.filter(app => app.date === formatDate(new Date())).length
+  }</center></h2>
 
-          <Calendar
-            onChange={setSelectedDate}
-            value={selectedDate}
-          />
+<div className="weekly-bar">
+{getWeekAppointments().map(({ displayDate, weekday, count }, idx) => (
+  <div key={idx} className={`day-box ${getColorClass(count)}`}>
+    <div className="date">{displayDate}</div>
+    <div className="weekday">{weekday}</div>
+    <div className="count">{count}</div>
+  </div>
+))}
+</div>
 
-          <button onClick={handleSearch}>Search Appointments</button>
+</div>
 
-          {filteredAppointments.map((appointment) => (
-            <div key={appointment.id}>
-              <p>{appointment.name}</p>
 
-              <input
-                type="file"
-                onChange={(e) =>
-                  handleXrayUpload(
-                    e,
-                    appointment.id,
-                    appointment.name,
-                    appointment.userId
-                  )
-                }
+
+
+<main className="content-wrapper">
+      <div className="clinic-portal">
+        {!showCancelView ? (
+          <>
+            <h1>Clinic Portal</h1>
+            <h2>Search Appointments</h2>
+
+            <div className="date-container">
+              <label>Select a Date</label>
+              <Calendar
+                onChange={setSelectedDate}
+                value={selectedDate}
+                className="custom-calendar"
               />
+              <button onClick={handleSearch}>Search Appointments</button>
             </div>
-          ))}
-        </div>
-      </main>
+
+            {searched && (
+              <div className="results-section">
+                <h2>Appointments for {formatDate(selectedDate)}</h2>
+               
+
+                {filteredAppointments.length > 0 ? (
+                  <div className="table-wrapper">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Time</th>
+                          <th>Name</th>
+                          <th>Age</th>
+                          <th>Gender</th>
+                          <th>Problem</th>
+                          <th>Medical History</th>
+                          <th>AI Analysis</th>
+
+                          <th>Upload X-ray</th>
+
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredAppointments.map((appointment) => (
+                          <tr key={appointment.id}>
+                            <td>{appointment.time || "Not specified"}</td>
+                            <td>{appointment.name || "Unknown"}</td>
+                            <td>{appointment.age || "Not specified"}</td>
+                            <td>{appointment.gender || "Not specified"}</td>
+                            <td>{appointment.problem || "Not specified"}</td>
+                            <td>{appointment.medicalHistory || "Not specified"}</td>
+                            <td>{appointment.aiAnalysis || "No analysis available"}</td>
+                            <td>
+
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={uploading}
+                              onChange={(e) =>
+                                handleXrayUpload(
+                                    e,
+                                    appointment.id,
+                                    appointment.name,
+                                    appointment.userId
+                                  )
+                              }
+                            />
+                          </td>
+
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="no-results">No appointments found for the selected date.</p>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="cancel-header">
+              <h2>Cancel Appointments</h2>
+            </div>
+
+            {getFutureAppointments().length === 0 ? (
+              <div className="no-appointments">
+                <p>No upcoming appointments found.</p>
+              </div>
+            ) : (
+              <div className="appointments-list">
+                {getFutureAppointments().map((appointment) => (
+                  <div key={appointment.id} className="appointment-card">
+                    <div className="appointment-details">
+                      <h3>{appointment.name}</h3>
+                      <p><strong>Date:</strong> {appointment.date}</p>
+                      <p><strong>Time:</strong> {appointment.time}</p>
+                      <p><strong>Problem:</strong> {appointment.problem}</p>
+                      <p><strong>Email:</strong> {appointment.email || 'N/A'}</p>
+                    </div>
+                    <div className="appointment-actions">
+                      <button
+                        className="cancel-btn"
+                        onClick={() => handleCancel(appointment.id, appointment)}
+                      >
+                        Cancel Appointment
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+</main>
     </div>
   );
 }
 
-export default ClinicPortal;
-```
-
+export default ClinicPortal; update with new url dont change logic & anything
