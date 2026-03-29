@@ -362,4 +362,4 @@ const handleXrayUpload = async (e, appointmentId, patientName, uid) => {
   );
 }
 
-export default ClinicPortal; update with new url dont change logic & anything
+export default ClinicPortal; 
