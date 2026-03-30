@@ -7,8 +7,10 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import cors from "cors";
+import fs from 'fs';
 import { config } from './config.js';
-import Razorpay from "razorpay";
+import Stripe from 'stripe';
+import Razorpay from 'razorpay';
 import { initializeReminderScheduler } from './src/server/reminderScheduler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,10 +21,7 @@ dotenv.config();
 
 const app = express();
 
-// ✅ IMPORTANT FOR RENDER
 const port = process.env.PORT || 10000;
-
-// ✅ CORS FIX
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -30,27 +29,30 @@ app.use(cors({
 
 app.use(express.json());
 
-// ✅ MEMORY STORAGE
+// ❗ (UNCHANGED - as per your request)
 const upload = multer({ storage: multer.memoryStorage() });
 
 // ---------------- GOOGLE VISION ----------------
 process.env.GOOGLE_CLOUD_PROJECT = 'clinic-management-ocr';
-
 let visionClient;
 try {
-    if (config.GOOGLE_VISION_API_KEY) {
+    const visionApiKey = config.GOOGLE_VISION_API_KEY;
+    
+    if (visionApiKey && visionApiKey !== 'your_vision_api_key_here') {
         visionClient = new ImageAnnotatorClient({
-            apiKey: config.GOOGLE_VISION_API_KEY
+            apiKey: visionApiKey,
+            projectId: config.GOOGLE_CLOUD_PROJECT
         });
-        console.log('✅ Vision initialized with API key');
+        console.log('✅ Google Cloud Vision client initialized with API key');
     } else {
         visionClient = new ImageAnnotatorClient({
-            keyFilename: path.join(__dirname, 'prescription-ocr-service.json')
+            keyFilename: path.join(__dirname, 'prescription-ocr-service.json'),
+            projectId: config.GOOGLE_CLOUD_PROJECT
         });
-        console.log('✅ Vision initialized with service account');
+        console.log('✅ Google Cloud Vision client initialized with service account');
     }
 } catch (error) {
-    console.error('❌ Vision init error:', error);
+    console.error('❌ Error initializing Google Cloud Vision client:', error);
     process.exit(1);
 }
 
@@ -58,17 +60,12 @@ try {
 const apiKey = config.GEMINI_API_KEY;
 
 if (!apiKey) {
-    console.error('❌ GEMINI_API_KEY missing');
+    console.error('❌ GEMINI_API_KEY missing in environment');
     process.exit(1);
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);
 console.log('✅ Gemini initialized');
-const razorpay = new Razorpay({
-    key_id: config.RAZORPAY_KEY_ID,
-    key_secret: config.RAZORPAY_KEY_SECRET
-});
-console.log('✅ Razorpay initialized');
 
 // ---------------- GEMINI FUNCTION ----------------
 async function extractMedicinesAndDosages(ocrText) {
@@ -108,7 +105,7 @@ ${ocrText}
     }
 }
 
-// ---------------- UPLOAD ROUTE (PRESCRIPTION) ----------------
+// ---------------- UPLOAD ROUTE ----------------
 app.post('/upload', upload.single('prescription'), async (req, res) => {
     console.log('Received upload');
 
@@ -145,34 +142,106 @@ app.post('/upload', upload.single('prescription'), async (req, res) => {
     }
 });
 
-// ❌ REMOVED WRONG GEMINI X-RAY ROUTE
-// 👉 X-ray should be handled by Python service ONLY
-// ---------------- RAZORPAY ORDER ROUTE ----------------
-app.post("/create-razorpay-order", async (req, res) => {
+// ---------------- STRIPE ----------------
+let stripe;
+if (config.STRIPE_SECRET_KEY) {
     try {
-        const { amount } = req.body; // amount in INR
-        if (!amount) return res.status(400).json({ error: "Amount is required" });
+        stripe = new Stripe(config.STRIPE_SECRET_KEY);
+        console.log('✅ Stripe initialized');
+    } catch (e) {
+        console.error('❌ Failed to initialize Stripe:', e.message);
+    }
+} else {
+    console.warn('⚠️ STRIPE_SECRET_KEY not set.');
+}
 
-        const options = {
-            amount: amount * 100, // convert to paise
-            currency: "INR"
-        };
+// ---------------- RAZORPAY (FIXED) ----------------
+let razorpay;
 
-        const order = await razorpay.orders.create(options);
-        res.json(order);
+if (config.RAZORPAY_KEY_ID && config.RAZORPAY_KEY_SECRET) {
+    try {
+        razorpay = new Razorpay({
+            key_id: config.RAZORPAY_KEY_ID,
+            key_secret: config.RAZORPAY_KEY_SECRET
+        });
+        console.log('✅ Razorpay initialized');
+    } catch (e) {
+        console.error('❌ Failed to initialize Razorpay:', e.message);
+    }
+} else {
+    console.warn('⚠️ Razorpay keys not set.');
+}
 
-    } catch (err) {
-        console.error("Razorpay order error:", err);
-        res.status(500).json({ error: "Failed to create order" });
+// ---------------- STRIPE ROUTE ----------------
+app.post('/create-checkout-session', async (req, res) => {
+    if (!stripe) {
+        return res.status(500).json({ error: 'Stripe not configured' });
+    }
+    try {
+        const { amount, currency, description, metadata } = req.body || {};
+
+        if (!amount || !currency) {
+            return res.status(400).json({ error: 'amount and currency are required' });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+            mode: 'payment',
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price_data: {
+                        currency,
+                        product_data: { name: description || 'Appointment Payment' },
+                        unit_amount: amount,
+                    },
+                    quantity: 1,
+                },
+            ],
+            metadata: metadata || {},
+           success_url: 'https://clinic-ease-project-f8v9.vercel.app/dashboard?payment=success',
+          cancel_url: 'https://clinic-ease-project-f8v9.vercel.app/dashboard?payment=cancel',
+        });
+
+        res.json({ id: session.id, url: session.url });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create checkout session' });
     }
 });
 
-// ---------------- TEST ROUTE ----------------
+// ---------------- RAZORPAY ORDER ROUTE ----------------
+app.post('/create-razorpay-order', async (req, res) => {
+    if (!razorpay) {
+        return res.status(500).json({ error: 'Razorpay not configured' });
+    }
+
+    try {
+        const { amount, currency, receipt, notes } = req.body || {};
+
+        if (!amount || !currency) {
+            return res.status(400).json({ error: 'amount and currency are required' });
+        }
+
+        const order = await razorpay.orders.create({
+            amount,
+            currency,
+            receipt: receipt || `rcpt_${Date.now()}`,
+            notes: notes || {}
+        });
+
+        res.json(order);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create Razorpay order' });
+    }
+});
+
+// ---------------- TEST ----------------
 app.get('/test', (req, res) => {
     res.json({ message: 'Server working' });
 });
 
-// ---------------- START SERVER ----------------
+// ---------------- START ----------------
 app.listen(port, "0.0.0.0", () => {
     console.log(`✅ Server running on port ${port}`);
 
@@ -184,6 +253,6 @@ app.listen(port, "0.0.0.0", () => {
     }
 });
 
-// ---------------- ERROR HANDLING ----------------
+// ---------------- ERROR ----------------
 process.on('unhandledRejection', console.error);
 process.on('uncaughtException', console.error);
