@@ -74,17 +74,47 @@ async function extractMedicinesAndDosages(ocrText) {
             model: "gemini-2.0-flash"
         });
 
-         const prompt = `
-Extract all medicine names, dosages, timing, frequency, and instructions from the following prescription text. 
+        const prompt = `
+Extract all medicine names, dosages, timing, frequency, and instructions from the following prescription text.
+
+IMPORTANT:
+- Convert all medical abbreviations into simple patient-friendly language:
+  - SOS → "Take only if needed"
+  - Q6H → "Every 6 hours"
+  - BD → "Twice daily"
+  - TDS → "3 times daily (morning, afternoon, night)"
+  - OD → "Once daily"
+
+- If instructions are present:
+  - Extract them clearly
+  - Simplify into patient-friendly language
+  - Example: "after food", "before meals", "avoid cold items", etc.
+
+- If instructions contain timing-related words (like "after food", "before meals"):
+  - Move them to "timing"
+  - Keep only extra guidance in "instructions"
+
+- If timing is not mentioned, write "Not specified"
+
+- If instructions are not available, write "No special instructions"
+
+- If patterns like 1-0-1, 0-1-0, 1-1-1 appear:
+  - Convert them to timing:
+    - 1-0-1 → "Morning and night"
+    - 0-1-0 → "Afternoon"
+    - 1-1-1 → "Morning, afternoon, night"
+
+- Always return clean JSON only (no explanation, no extra text)
+
 Return the data in this exact JSON format:
 {
   "medicines": [
     {
       "name": "Medicine Name",
-      "dosage": "Dosage (e.g., 500mg, 1 tablet)",
-      "timing": "When to take (e.g., morning, evening, before meals)",
-      "frequency": "How often (e.g., twice daily, once daily)",
-      "instructions": "Special instructions (e.g., take with food, avoid alcohol)"
+      "dosage": "Dosage",
+      "timing": "Timing",
+      "frequency": "Frequency in simple words",
+      "instructions": "Instructions"
     }
   ]
 }
