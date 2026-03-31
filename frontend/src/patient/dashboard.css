@@ -107,8 +107,16 @@ body:has(.dashboard-container) {
   color: #ccc !important;
 }
 
+/* Fade previous month numbers */
+.react-calendar__month-view__days__day--neighboringMonth abbr {
+  opacity: 0.3 !important;
+}
+
 /* Remove selection color */
-.react-calendar__tile--active {
+.react-calendar__tile--active,
+.react-calendar__tile--range,
+.react-calendar__tile--rangeStart,
+.react-calendar__tile--rangeEnd {
   background: transparent !important;
   color: inherit !important;
 }
@@ -117,7 +125,7 @@ body:has(.dashboard-container) {
 .react-calendar__tile--now {
   background: #b3e5fc !important;
   color: #000 !important;
-  border-radius: 8px;
+  border-radius: 8px !important;
 }
 
 .dark .react-calendar__tile--now {
