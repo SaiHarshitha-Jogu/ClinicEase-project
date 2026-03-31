@@ -74,18 +74,17 @@ async function extractMedicinesAndDosages(ocrText) {
             model: "gemini-2.0-flash"
         });
 
-        const prompt = `
-Extract medicines from this prescription.
-
-Return ONLY JSON:
+         const prompt = `
+Extract all medicine names, dosages, timing, frequency, and instructions from the following prescription text. 
+Return the data in this exact JSON format:
 {
   "medicines": [
     {
-      "name": "",
-      "dosage": "",
-      "timing": "",
-      "frequency": "",
-      "instructions": ""
+      "name": "Medicine Name",
+      "dosage": "Dosage (e.g., 500mg, 1 tablet)",
+      "timing": "When to take (e.g., morning, evening, before meals)",
+      "frequency": "How often (e.g., twice daily, once daily)",
+      "instructions": "Special instructions (e.g., take with food, avoid alcohol)"
     }
   ]
 }
