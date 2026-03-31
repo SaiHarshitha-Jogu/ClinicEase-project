@@ -1,4 +1,4 @@
-/* FULL SCREEN FIX */
+/* ================= FULL SCREEN FIX ================= */
 html, body {
   margin: 0;
   padding: 0;
@@ -10,14 +10,14 @@ body {
   overflow-x: hidden;
 }
 
-/* Reset scrolling behavior ONLY for dashboard */
+/* Dashboard scroll */
 body:has(.dashboard-container) {
   height: auto !important;
   min-height: 100%;
   overflow-y: auto !important;
 }
 
-/* Container styling */
+/* ================= CONTAINER ================= */
 .dashboard-container {
   text-align: center;
   width: 100%;
@@ -29,7 +29,7 @@ body:has(.dashboard-container) {
   min-height: 100vh;
 }
 
-/* Theme */
+/* ================= THEME ================= */
 .dark .dashboard-container {
   background-color: #1a1a1a;
   color: #e0e0e0;
@@ -40,7 +40,7 @@ body:has(.dashboard-container) {
   color: #333;
 }
 
-/* Header */
+/* ================= HEADER ================= */
 .dashboard-header {
   margin-bottom: 3rem;
   text-align: center;
@@ -51,7 +51,7 @@ body:has(.dashboard-container) {
   color: #2196f3;
 }
 
-/* Quick stats */
+/* ================= STATS ================= */
 .quick-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -69,14 +69,14 @@ body:has(.dashboard-container) {
   background: #2d2d2d;
 }
 
-/* GRID FIX */
+/* ================= GRID ================= */
 .dashboard-main-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
 }
 
-/* Calendar Section */
+/* ================= CALENDAR ================= */
 .calendar-section {
   background: white;
   border-radius: 12px;
@@ -90,7 +90,6 @@ body:has(.dashboard-container) {
   background: #1a1a1a;
 }
 
-/* Calendar */
 .appointments-calendar {
   width: 100%;
   padding: 1rem;
@@ -102,19 +101,19 @@ body:has(.dashboard-container) {
   background: #2d2d2d;
 }
 
-/* Remove previous/next month color */
+/* Remove previous month color */
 .react-calendar__month-view__days__day--neighboringMonth {
   background: transparent !important;
   color: #ccc !important;
 }
 
-/* Remove dark blue selection */
+/* Remove selection color */
 .react-calendar__tile--active {
   background: transparent !important;
   color: inherit !important;
 }
 
-/* TODAY DATE */
+/* TODAY DATE ONLY */
 .react-calendar__tile--now {
   background: #b3e5fc !important;
   color: #000 !important;
@@ -125,13 +124,13 @@ body:has(.dashboard-container) {
   background: #4fc3f7 !important;
 }
 
-/* Highlight appointments */
+/* Appointment highlight */
 .has-appointment {
   background: rgba(33, 150, 243, 0.15);
   color: #2196f3;
 }
 
-/* Analysis Section */
+/* ================= ANALYSIS ================= */
 .analysis-section {
   background: white;
   border-radius: 12px;
@@ -143,7 +142,7 @@ body:has(.dashboard-container) {
   background: #2d2d2d;
 }
 
-/* Medicines Section */
+/* ================= MEDICINES ================= */
 .medicines-section {
   background: white;
   border-radius: 12px;
@@ -158,7 +157,7 @@ body:has(.dashboard-container) {
   background: #2d2d2d;
 }
 
-/* Grid */
+/* ================= GRID CARDS ================= */
 .medicines-grid,
 .appointments-grid {
   display: grid;
@@ -166,7 +165,6 @@ body:has(.dashboard-container) {
   gap: 1.5rem;
 }
 
-/* Cards */
 .medicine-card,
 .appointment-card {
   width: 100%;
@@ -181,42 +179,47 @@ body:has(.dashboard-container) {
   background: #2d2d2d;
 }
 
-/* Text fix */
+/* ================= TEXT ================= */
 .analysis-text {
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
-/* Buttons */
+/* ================= BUTTONS ================= */
 .btn {
   padding: 1rem 2rem;
   border-radius: 12px;
   cursor: pointer;
 }
 
-/* PAY BUTTON */
-.pay-btn {
-  background: linear-gradient(135deg, #2196f3, #1976d2);
-  color: white;
-  border-radius: 8px;
-  padding: 10px 20px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
+/* 🔵 PAY BUTTON */
+button.pay-btn {
+  background: linear-gradient(135deg, #2196f3, #1976d2) !important;
+  color: #fff !important;
+  border: none !important;
 }
 
-/* GENERATE REPORT BUTTON */
-.report-btn {
-  background: linear-gradient(135deg, #2196f3, #1976d2);
-  color: white;
-  border-radius: 8px;
-  padding: 10px 20px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
+/* 🔵 GENERATE REPORT BUTTON */
+button.report-btn {
+  background: linear-gradient(135deg, #2196f3, #1976d2) !important;
+  color: #fff !important;
+  border: none !important;
 }
 
-/* Responsive */
+/* Hover */
+button.pay-btn:hover,
+button.report-btn:hover {
+  background: linear-gradient(135deg, #1976d2, #1565c0) !important;
+}
+
+/* Remove disabled grey */
+button:disabled {
+  opacity: 1 !important;
+  cursor: pointer !important;
+  background: linear-gradient(135deg, #2196f3, #1976d2) !important;
+}
+
+/* ================= RESPONSIVE ================= */
 @media (max-width: 768px) {
   .dashboard-container {
     padding: 1rem;
