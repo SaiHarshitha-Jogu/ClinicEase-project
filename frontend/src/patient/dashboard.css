@@ -1,3 +1,10 @@
+/* FULL SCREEN FIX */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
 /* Prevent horizontal scroll */
 body {
   overflow-x: hidden;
@@ -7,8 +14,6 @@ body {
 body:has(.dashboard-container) {
   height: auto !important;
   min-height: 100%;
-  margin: 0;
-  padding: 0;
   overflow-y: auto !important;
 }
 
@@ -16,13 +21,9 @@ body:has(.dashboard-container) {
 .dashboard-container {
   text-align: center;
   width: 100%;
-  height: auto;
-  margin: 0;
   margin-top: 64px;
   padding: 2rem;
   box-sizing: border-box;
-  position: relative;
-  overflow: visible !important;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -39,7 +40,7 @@ body:has(.dashboard-container) {
   color: #333;
 }
 
-/* Dashboard Header */
+/* Header */
 .dashboard-header {
   margin-bottom: 3rem;
   text-align: center;
@@ -47,7 +48,6 @@ body:has(.dashboard-container) {
 
 .dashboard-header h1 {
   font-size: 2.5rem;
-  margin-bottom: 2rem;
   color: #2196f3;
 }
 
@@ -69,14 +69,14 @@ body:has(.dashboard-container) {
   background: #2d2d2d;
 }
 
-/* GRID FIX (important) */
+/* GRID FIX */
 .dashboard-main-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
 }
 
-/* Calendar Section FIX */
+/* Calendar Section */
 .calendar-section {
   background: white;
   border-radius: 12px;
@@ -102,13 +102,19 @@ body:has(.dashboard-container) {
   background: #2d2d2d;
 }
 
-/* Highlight appointments */
-.has-appointment {
-  background: rgba(33, 150, 243, 0.15);
-  color: #2196f3;
+/* Remove previous/next month color */
+.react-calendar__month-view__days__day--neighboringMonth {
+  background: transparent !important;
+  color: #ccc !important;
 }
 
-/* TODAY DATE COLOR */
+/* Remove dark blue selection */
+.react-calendar__tile--active {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* TODAY DATE */
 .react-calendar__tile--now {
   background: #b3e5fc !important;
   color: #000 !important;
@@ -119,20 +125,25 @@ body:has(.dashboard-container) {
   background: #4fc3f7 !important;
 }
 
-/* Analysis Section FIX */
+/* Highlight appointments */
+.has-appointment {
+  background: rgba(33, 150, 243, 0.15);
+  color: #2196f3;
+}
+
+/* Analysis Section */
 .analysis-section {
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
   width: 100%;
-  max-width: 100%;
 }
 
 .dark .analysis-section {
   background: #2d2d2d;
 }
 
-/* Medicines Section FIX (MAIN BUG FIX) */
+/* Medicines Section */
 .medicines-section {
   background: white;
   border-radius: 12px;
@@ -140,8 +151,7 @@ body:has(.dashboard-container) {
   margin-top: 50px;
   width: 100%;
   max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 50px auto 0 auto;
 }
 
 .dark .medicines-section {
@@ -182,6 +192,28 @@ body:has(.dashboard-container) {
   padding: 1rem 2rem;
   border-radius: 12px;
   cursor: pointer;
+}
+
+/* PAY BUTTON */
+.pay-btn {
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  color: white;
+  border-radius: 8px;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* GENERATE REPORT BUTTON */
+.report-btn {
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  color: white;
+  border-radius: 8px;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
 }
 
 /* Responsive */
