@@ -1,33 +1,26 @@
-/* ===== GLOBAL FIX ===== */
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-* {
-  box-sizing: inherit;
-}
-
-/* ===== BODY SCROLL FIX ===== */
+/* Reset scrolling behavior ONLY for dashboard */
 body:has(.dashboard-container) {
   height: auto !important;
   min-height: 100%;
+  margin: 0;
+  padding: 0;
   overflow-y: auto !important;
 }
 
-/* ===== MAIN CONTAINER ===== */
+/* Container styling */
 .dashboard-container {
+  text-align: center;
   width: 100%;
-  margin-top: 70px; /* FIXED */
-  padding: 2rem 1rem;
+  margin: 0;
+  margin-top: 64px;
+  padding: 2rem;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* ===== THEMES ===== */
+/* Theme */
 .dark .dashboard-container {
   background-color: #1a1a1a;
   color: #e0e0e0;
@@ -38,37 +31,33 @@ body:has(.dashboard-container) {
   color: #333;
 }
 
-/* ===== HEADER ===== */
-.dashboard-header {
-  margin-bottom: 2rem;
+/* Button container */
+.button-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 3rem auto;
+  max-width: 800px;
+  flex-wrap: wrap;
 }
 
-.dashboard-header h1 {
-  font-size: 2.2rem;
-  color: #2196f3;
-}
-
-/* ===== GRID LAYOUT ===== */
+/* Grid FIX */
 .dashboard-main-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* RESPONSIVE */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
 }
 
-/* ===== LEFT / RIGHT COLUMNS ===== */
-.right-column {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-/* ===== ANALYSIS SECTION ===== */
+/* Analysis Section */
 .analysis-section {
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
   width: 100%;
-  min-height: 400px; /* FIXED */
+  max-width: 100%;
+  height: auto;
+  min-height: 400px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
 }
@@ -77,115 +66,103 @@ body:has(.dashboard-container) {
   background: #2d2d2d;
 }
 
-/* ===== ANALYSIS CONTENT ===== */
-.analysis-details {
-  flex: 1;
-  overflow-y: auto;
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 8px;
-}
-
-.dark .analysis-details {
-  background: #333;
-}
-
-/* ===== CALENDAR SECTION ===== */
+/* Calendar Section */
 .calendar-section {
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
+  margin: 0 auto;
   width: 100%;
-  min-height: 400px; /* FIXED */
+  height: auto;
+  min-height: 400px;
 }
 
 .dark .calendar-section {
   background: #1a1a1a;
 }
 
-/* ===== MEDICINES SECTION ===== */
+/* 👉 CALENDAR BASE STYLE */
+.appointments-calendar {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* 👉 TODAY DATE ONLY (LIGHT BLUE) */
+.appointments-calendar .react-calendar__tile--now {
+  background-color: #add8e6 !important;
+  color: #000 !important;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Dark mode today */
+.dark .appointments-calendar .react-calendar__tile--now {
+  background-color: #4fc3f7 !important;
+  color: #000 !important;
+}
+
+/* Medicines Section */
 .medicines-section {
-  margin-top: 2rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
   width: 100%;
   max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 50px auto 0 auto;
 }
 
 .dark .medicines-section {
   background: #2d2d2d;
 }
 
-/* ===== GRID CARDS ===== */
+/* Cards */
+.medicine-card,
+.appointment-card,
+.stat-card {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Grid fixes */
 .appointments-grid,
 .medicines-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
 }
 
-/* ===== CARD ===== */
-.appointment-card,
-.medicine-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1rem;
-  transition: 0.3s;
+/* Images FIX */
+img {
+  max-width: 100%;
+  height: auto;
 }
 
-.dark .appointment-card,
-.dark .medicine-card {
-  background: #2d2d2d;
+/* Text wrap FIX */
+.analysis-text {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
-/* ===== BUTTONS ===== */
+/* Buttons */
 .btn {
   padding: 0.8rem 1.5rem;
   border-radius: 8px;
-  border: none;
   cursor: pointer;
 }
 
-.btn-primary {
-  background: #2196f3;
-  color: white;
+/* GLOBAL FIX */
+* {
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
-.btn-secondary {
-  background: #6c5ce7;
-  color: white;
-}
-
-/* ===== FLEX BUTTON CONTAINER ===== */
-.button-container {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-/* ===== IMAGE ===== */
-.dashboard-image {
-  width: 100%;
-  max-width: 400px;
-}
-
-/* ===== TEXT ===== */
-.quote {
-  font-size: 1.3rem;
-  text-align: center;
-}
-
-/* ===== RESPONSIVE ===== */
+/* MOBILE FIX */
 @media (max-width: 768px) {
-
   .dashboard-container {
     padding: 1rem;
-  }
-
-  .dashboard-header h1 {
-    font-size: 1.8rem;
-    text-align: center;
   }
 
   .dashboard-main-grid {
@@ -194,10 +171,13 @@ body:has(.dashboard-container) {
 
   .button-container {
     flex-direction: column;
-    align-items: center;
+    gap: 1rem;
   }
 
-  .quote {
-    font-size: 1.1rem;
+  .analysis-section,
+  .calendar-section,
+  .medicines-section {
+    width: 100%;
+    margin: 0;
   }
 }
