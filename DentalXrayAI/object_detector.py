@@ -66,22 +66,13 @@ def detect_objects_on_image(buf):
     return output
 
 # ---------------- ANALYSIS ----------------
-def analyze_xray(image):
-    # ✅ CHANGE 1: removed forced resize (keeps original detail)
-    img = image.convert("RGB")
-
-    # ✅ CHANGE 2: improved YOLO config for more findings
-    results = model.predict(
-        img,
-        imgsz=640,
-        conf=0.25,
-        augment=True,
-        max_det=100
-    )
-
+def analyze_xray(filepath):
+    # ✅ SAME as original (filepath input)
+    results = model.predict(filepath)
     result = results[0]
 
     findings = []
+    img = Image.open(filepath).convert("RGB")
     draw = ImageDraw.Draw(img)
     font = ImageFont.load_default()
 
@@ -89,11 +80,6 @@ def analyze_xray(image):
         x1, y1, x2, y2 = [round(x) for x in box.xyxy[0].tolist()]
         class_id = box.cls[0].item()
         conf = round(box.conf[0].item(), 2)
-
-        # ✅ CHANGE 3: optional light filtering (keeps useful detections)
-        if conf < 0.20:
-            continue
-
         conf_percent = f"{conf * 100:.2f}%"
         label = result.names[class_id]
 
@@ -120,30 +106,32 @@ def analyze_xray_route():
 
     file = request.files['image_file']
     filename = f"xray_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+
+    # ✅ SAVE FILE (required for filepath detection)
+    file.save(filepath)
 
     from io import BytesIO
 
     # -------- Upload original to Firebase --------
-    blob_xray = bucket.blob(f"xrays/{filename}")
-    file.stream.seek(0)
-    blob_xray.upload_from_file(file.stream, content_type=file.content_type)
-    blob_xray.make_public()
+    with open(filepath, "rb") as f:
+        blob_xray = bucket.blob(f"xrays/{filename}")
+        blob_xray.upload_from_file(f, content_type=file.content_type)
+        blob_xray.make_public()
 
     # -------- Process image --------
-    file.stream.seek(0)
-    image = Image.open(file.stream)
-    output_image, findings = analyze_xray(image)
+    output_image, findings = analyze_xray(filepath)
 
     # -------- Upload annotated image --------
     output_filename = f"annotated_{filename}"
+    output_path = os.path.join(RESULT_FOLDER, output_filename)
 
-    img_byte_arr = BytesIO()
-    output_image.save(img_byte_arr, format='JPEG')
-    img_byte_arr.seek(0)
+    output_image.save(output_path)
 
-    blob_annotated = bucket.blob(f"annotated_xrays/{output_filename}")
-    blob_annotated.upload_from_file(img_byte_arr, content_type='image/jpeg')
-    blob_annotated.make_public()
+    with open(output_path, "rb") as f:
+        blob_annotated = bucket.blob(f"annotated_xrays/{output_filename}")
+        blob_annotated.upload_from_file(f, content_type='image/jpeg')
+        blob_annotated.make_public()
 
     image_url = blob_annotated.public_url
 
