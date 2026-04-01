@@ -36,7 +36,6 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 # Load model
 model = YOLO("best.pt")
 
-# (kept but not used now - safe to keep)
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads', 'xrays')
 RESULT_FOLDER = os.path.join(BASE_DIR, 'uploads', 'annotated_xrays')
 
@@ -68,9 +67,18 @@ def detect_objects_on_image(buf):
 
 # ---------------- ANALYSIS ----------------
 def analyze_xray(image):
-    img = image.convert("RGB").resize((640, 640))
+    # ✅ CHANGE 1: removed forced resize (keeps original detail)
+    img = image.convert("RGB")
 
-    results = model.predict(img, imgsz=320, conf=0.5)
+    # ✅ CHANGE 2: improved YOLO config for more findings
+    results = model.predict(
+        img,
+        imgsz=640,
+        conf=0.25,
+        augment=True,
+        max_det=100
+    )
+
     result = results[0]
 
     findings = []
@@ -81,6 +89,11 @@ def analyze_xray(image):
         x1, y1, x2, y2 = [round(x) for x in box.xyxy[0].tolist()]
         class_id = box.cls[0].item()
         conf = round(box.conf[0].item(), 2)
+
+        # ✅ CHANGE 3: optional light filtering (keeps useful detections)
+        if conf < 0.20:
+            continue
+
         conf_percent = f"{conf * 100:.2f}%"
         label = result.names[class_id]
 
@@ -116,7 +129,7 @@ def analyze_xray_route():
     blob_xray.upload_from_file(file.stream, content_type=file.content_type)
     blob_xray.make_public()
 
-    # -------- Process image (your logic unchanged) --------
+    # -------- Process image --------
     file.stream.seek(0)
     image = Image.open(file.stream)
     output_image, findings = analyze_xray(image)
@@ -139,7 +152,7 @@ def analyze_xray_route():
         "findings": findings
     })
 
-# ---------------- SERVE FILES (optional, not used now) ----------------
+# ---------------- SERVE FILES ----------------
 @app.route('/uploads/annotated_xrays/<filename>')
 def serve_annotated_file(filename):
     return send_from_directory(RESULT_FOLDER, filename)
@@ -152,4 +165,4 @@ def serve_original_file(filename):
 if __name__ == "__main__":
     logger.info("Server starting...")
     port = int(os.environ.get("PORT", 10000))
-    serve(app,host="0.0.0.0", port=port)
+    serve(app, host="0.0.0.0", port=port)
