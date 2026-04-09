@@ -11,7 +11,7 @@ import firebase_admin
 from firebase_admin import credentials, storage
 import json
 
-# Firebase initialization from Render ENV
+# Firebase initialization
 firebase_json = os.environ.get("FIREBASE_KEY")
 cred_dict = json.loads(firebase_json)
 
@@ -26,12 +26,12 @@ bucket = storage.bucket()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Base directory
 BASE_DIR = Path(__file__).parent.absolute()
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+# ✅ FIXED CORS
+CORS(app, supports_credentials=True)
 
 # Load model
 model = YOLO("best.pt")
@@ -46,36 +46,13 @@ os.makedirs(RESULT_FOLDER, exist_ok=True)
 def root():
     return "Dental X-ray Analysis API is running!"
 
-# ---------------- DETECTION ----------------
-@app.route("/detect", methods=["POST"])
-def detect():
-    buf = request.files["image_file"]
-    boxes = detect_objects_on_image(buf.stream)
-    return jsonify(boxes)
-
-def detect_objects_on_image(buf):
-    results = model.predict(Image.open(buf))
-    result = results[0]
-    output = []
-    for box in result.boxes:
-        x1, y1, x2, y2 = [round(x) for x in box.xyxy[0].tolist()]
-        class_id = box.cls[0].item()
-        prob = round(box.conf[0].item(), 2)
-        prob_percentage = f"{prob * 100:.2f}%"
-        output.append([x1, y1, x2, y2, result.names[class_id], prob_percentage])
-    return output
-
 # ---------------- ANALYSIS ----------------
 def analyze_xray(filepath):
-    # Load original image
     orig_img = Image.open(filepath).convert("RGB")
     orig_w, orig_h = orig_img.size
 
-    # Resize image for YOLO inference (faster & lighter)
-    img_resized = orig_img.resize((640, 640))
-
-    # Predict on resized image
-    results = model.predict(img_resized)
+    # Optional improvement
+    results = model.predict(orig_img, imgsz=640)
     result = results[0]
 
     findings = []
@@ -83,13 +60,7 @@ def analyze_xray(filepath):
     font = ImageFont.load_default()
 
     for box in result.boxes:
-        # Get box coordinates from resized image
         x1, y1, x2, y2 = [round(x) for x in box.xyxy[0].tolist()]
-        # Scale coordinates back to original image size
-        x1 = round(x1 * orig_w / 640)
-        y1 = round(y1 * orig_h / 640)
-        x2 = round(x2 * orig_w / 640)
-        y2 = round(y2 * orig_h / 640)
 
         class_id = box.cls[0].item()
         conf = round(box.conf[0].item(), 2)
@@ -111,8 +82,13 @@ def analyze_xray(filepath):
 @app.route('/analyze-xray', methods=['POST', 'OPTIONS'])
 def analyze_xray_route():
 
+    # ✅ FIXED OPTIONS
     if request.method == 'OPTIONS':
-        return '', 204
+        response = jsonify({"message": "ok"})
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "POST,OPTIONS"
+        return response, 200
 
     if 'image_file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
@@ -121,21 +97,18 @@ def analyze_xray_route():
     filename = f"xray_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
     filepath = os.path.join(UPLOAD_FOLDER, filename)
 
-    # ✅ SAVE FILE (required for filepath detection)
     file.save(filepath)
 
-    from io import BytesIO
-
-    # -------- Upload original to Firebase --------
+    # Upload original
     with open(filepath, "rb") as f:
         blob_xray = bucket.blob(f"xrays/{filename}")
         blob_xray.upload_from_file(f, content_type=file.content_type)
         blob_xray.make_public()
 
-    # -------- Process image --------
+    # Process
     output_image, findings = analyze_xray(filepath)
 
-    # -------- Upload annotated image --------
+    # Save annotated
     output_filename = f"annotated_{filename}"
     output_path = os.path.join(RESULT_FOLDER, output_filename)
 
@@ -153,22 +126,12 @@ def analyze_xray_route():
         "findings": findings
     })
 
-# ---------------- SERVE FILES ----------------
-@app.route('/uploads/annotated_xrays/<filename>')
-def serve_annotated_file(filename):
-    return send_from_directory(RESULT_FOLDER, filename)
-
-@app.route('/uploads/xrays/<filename>')
-def serve_original_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
-
-# ---------------- START SERVER ----------------
-# ---------------- CORS FIX ----------------
+# ---------------- CORS HEADERS ----------------
 @app.after_request
 def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
-    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
     return response
 
 # ---------------- START SERVER ----------------
