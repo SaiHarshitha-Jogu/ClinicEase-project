@@ -546,15 +546,23 @@ function Dashboard() {
                               ? JSON.stringify(x.findings)
                               : x.findings}
                         </td>
-                        <td>
-                          <img
-                            
-  src={x.annotatedImageUrl}  // use the actual URL from Firestore
-  alt="X-ray"
-  style={{ width: "250px", maxWidth: "100%", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
-  onError={(e) => { e.target.src = "/fallback-xray.png"; }} // optional fallback if image fails
-                          />
-                        </td>
+                        <td style={{ overflow: "auto" }}>
+  <img
+    src={x.annotatedImageUrl}
+    alt="X-ray"
+    style={{
+      display: "block",
+      width: "auto",
+      height: "auto",
+      maxWidth: "none",
+      maxHeight: "none",
+      borderRadius: "8px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+    }}
+    onError={(e) => { e.target.src = "/fallback-xray.png"; }}
+  />
+
+                   </td>
                         <td>{x.doctorName}</td>
                         <td>{x.doctorComments || "No comments"}</td>
                       </tr>
