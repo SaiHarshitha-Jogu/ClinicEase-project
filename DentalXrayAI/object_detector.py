@@ -67,17 +67,30 @@ def detect_objects_on_image(buf):
 
 # ---------------- ANALYSIS ----------------
 def analyze_xray(filepath):
-    # ✅ SAME as original (filepath input)
-    results = model.predict(filepath)
+    # Load original image
+    orig_img = Image.open(filepath).convert("RGB")
+    orig_w, orig_h = orig_img.size
+
+    # Resize image for YOLO inference (faster & lighter)
+    img_resized = orig_img.resize((640, 640))
+
+    # Predict on resized image
+    results = model.predict(img_resized)
     result = results[0]
 
     findings = []
-    img = Image.open(filepath).convert("RGB")
-    draw = ImageDraw.Draw(img)
+    draw = ImageDraw.Draw(orig_img)
     font = ImageFont.load_default()
 
     for box in result.boxes:
+        # Get box coordinates from resized image
         x1, y1, x2, y2 = [round(x) for x in box.xyxy[0].tolist()]
+        # Scale coordinates back to original image size
+        x1 = round(x1 * orig_w / 640)
+        y1 = round(y1 * orig_h / 640)
+        x2 = round(x2 * orig_w / 640)
+        y2 = round(y2 * orig_h / 640)
+
         class_id = box.cls[0].item()
         conf = round(box.conf[0].item(), 2)
         conf_percent = f"{conf * 100:.2f}%"
@@ -92,7 +105,7 @@ def analyze_xray(filepath):
         draw.rectangle([x1, y1, x2, y2], outline="green", width=3)
         draw.text((x1, y1 - 10), f"{label} ({conf_percent})", fill="green", font=font)
 
-    return img, findings
+    return orig_img, findings
 
 # ---------------- API ----------------
 @app.route('/analyze-xray', methods=['POST', 'OPTIONS'])
@@ -148,6 +161,15 @@ def serve_annotated_file(filename):
 @app.route('/uploads/xrays/<filename>')
 def serve_original_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
+
+# ---------------- START SERVER ----------------
+# ---------------- CORS FIX ----------------
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    return response
 
 # ---------------- START SERVER ----------------
 if __name__ == "__main__":
