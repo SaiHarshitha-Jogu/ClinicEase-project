@@ -22,6 +22,7 @@ dotenv.config();
 const app = express();
 
 const port = process.env.PORT || 10000;
+
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -29,27 +30,27 @@ app.use(cors({
 
 app.use(express.json());
 
-// ❗ (UNCHANGED - as per your request)
 const upload = multer({ storage: multer.memoryStorage() });
 
 // ---------------- GOOGLE VISION ----------------
 process.env.GOOGLE_CLOUD_PROJECT = 'clinic-management-ocr';
+
 let visionClient;
+
 try {
-    const visionApiKey = config.GOOGLE_VISION_API_KEY;
-    
-    if (visionApiKey && visionApiKey !== 'your_vision_api_key_here') {
+    // ✅ Render support (ENV JSON)
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
         visionClient = new ImageAnnotatorClient({
-            apiKey: visionApiKey,
-            projectId: config.GOOGLE_CLOUD_PROJECT
+            credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
         });
-        console.log('✅ Google Cloud Vision client initialized with API key');
-    } else {
+        console.log('✅ Google Vision initialized using ENV (Render)');
+    } 
+    // ✅ Local support (JSON file)
+    else {
         visionClient = new ImageAnnotatorClient({
-            keyFilename: path.join(__dirname, 'prescription-ocr-service.json'),
-            projectId: config.GOOGLE_CLOUD_PROJECT
+            keyFilename: path.join(__dirname, 'prescription-ocr-service.json')
         });
-        console.log('✅ Google Cloud Vision client initialized with service account');
+        console.log('✅ Google Vision initialized using JSON file (local)');
     }
 } catch (error) {
     console.error('❌ Error initializing Google Cloud Vision client:', error);
@@ -88,36 +89,19 @@ IMPORTANT:
 - If instructions are present:
   - Extract them clearly
   - Simplify into patient-friendly language
-  - Example: "after food", "before meals", "avoid cold items", etc.
 
-- If instructions contain timing-related words (like "after food", "before meals"):
+- If instructions contain timing-related words:
   - Move them to "timing"
-  - Keep only extra guidance in "instructions"
 
 - If timing is not mentioned, write "Not specified"
-
 - If instructions are not available, write "No special instructions"
 
-- If patterns like 1-0-1, 0-1-0, 1-1-1 appear:
-  - Convert them to timing:
-    - 1-0-1 → "Morning and night"
-    - 0-1-0 → "Afternoon"
-    - 1-1-1 → "Morning, afternoon, night"
+- Convert patterns:
+  - 1-0-1 → Morning and night
+  - 0-1-0 → Afternoon
+  - 1-1-1 → Morning, afternoon, night
 
-- Always return clean JSON only (no explanation, no extra text)
-
-Return the data in this exact JSON format:
-{
-  "medicines": [
-    {
-      "name": "Medicine Name",
-      "dosage": "Dosage",
-      "timing": "Timing",
-      "frequency": "Frequency in simple words",
-      "instructions": "Instructions"
-    }
-  ]
-}
+Return JSON only.
 
 Text:
 ${ocrText}
@@ -180,13 +164,10 @@ if (config.STRIPE_SECRET_KEY) {
     } catch (e) {
         console.error('❌ Failed to initialize Stripe:', e.message);
     }
-} else {
-    console.warn('⚠️ STRIPE_SECRET_KEY not set.');
 }
 
-// ---------------- RAZORPAY (FIXED) ----------------
+// ---------------- RAZORPAY ----------------
 let razorpay;
-
 if (config.RAZORPAY_KEY_ID && config.RAZORPAY_KEY_SECRET) {
     try {
         razorpay = new Razorpay({
@@ -197,71 +178,51 @@ if (config.RAZORPAY_KEY_ID && config.RAZORPAY_KEY_SECRET) {
     } catch (e) {
         console.error('❌ Failed to initialize Razorpay:', e.message);
     }
-} else {
-    console.warn('⚠️ Razorpay keys not set.');
 }
 
-// ---------------- STRIPE ROUTE ----------------
+// ---------------- ROUTES ----------------
 app.post('/create-checkout-session', async (req, res) => {
-    if (!stripe) {
-        return res.status(500).json({ error: 'Stripe not configured' });
-    }
-    try {
-        const { amount, currency, description, metadata } = req.body || {};
+    if (!stripe) return res.status(500).json({ error: 'Stripe not configured' });
 
-        if (!amount || !currency) {
-            return res.status(400).json({ error: 'amount and currency are required' });
-        }
+    try {
+        const { amount, currency } = req.body;
 
         const session = await stripe.checkout.sessions.create({
             mode: 'payment',
             payment_method_types: ['card'],
-            line_items: [
-                {
-                    price_data: {
-                        currency,
-                        product_data: { name: description || 'Appointment Payment' },
-                        unit_amount: amount,
-                    },
-                    quantity: 1,
+            line_items: [{
+                price_data: {
+                    currency,
+                    product_data: { name: 'Appointment Payment' },
+                    unit_amount: amount,
                 },
-            ],
-            metadata: metadata || {},
-           success_url: 'https://clinic-ease-project-f8v9.vercel.app/dashboard?payment=success',
-          cancel_url: 'https://clinic-ease-project-f8v9.vercel.app/dashboard?payment=cancel',
+                quantity: 1,
+            }],
+            success_url: 'https://clinic-ease-project-f8v9.vercel.app/dashboard?payment=success',
+            cancel_url: 'https://clinic-ease-project-f8v9.vercel.app/dashboard?payment=cancel',
         });
 
-        res.json({ id: session.id, url: session.url });
+        res.json({ url: session.url });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to create checkout session' });
+        res.status(500).json({ error: 'Stripe error' });
     }
 });
 
-// ---------------- RAZORPAY ORDER ROUTE ----------------
 app.post('/create-razorpay-order', async (req, res) => {
-    if (!razorpay) {
-        return res.status(500).json({ error: 'Razorpay not configured' });
-    }
+    if (!razorpay) return res.status(500).json({ error: 'Razorpay not configured' });
 
     try {
-        const { amount, currency, receipt, notes } = req.body || {};
-
-        if (!amount || !currency) {
-            return res.status(400).json({ error: 'amount and currency are required' });
-        }
+        const { amount, currency } = req.body;
 
         const order = await razorpay.orders.create({
             amount,
             currency,
-            receipt: receipt || `rcpt_${Date.now()}`,
-            notes: notes || {}
+            receipt: `rcpt_${Date.now()}`
         });
 
         res.json(order);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to create Razorpay order' });
+    } catch {
+        res.status(500).json({ error: 'Razorpay error' });
     }
 });
 
