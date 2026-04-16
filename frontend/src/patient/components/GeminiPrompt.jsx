@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function fetchGeminiResponse(promptText) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
     const prompt = `Read the following description of a medical problem and translate to professional or medical jargon if necessary without exaggerating the problem. Convert terms like "sugar" to "diabetes". Only translate what the patient has said and express it as [translated text] followed by the original statement: ${promptText}`;
     
     const result = await model.generateContent(prompt);
@@ -19,7 +19,7 @@ export async function fetchGeminiResponse(promptText) {
 // New function to analyze medicine usage and effects
 export async function fetchMedicineAnalysis(medicineList) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
     const prompt = `Analyze these medicines: ${medicineList.join(", ")}
 
 Format your response exactly like this example, replacing the content with appropriate analysis:
@@ -53,7 +53,7 @@ Important:
 // AI analysis tailored for the PDF report
 export async function fetchReportAnalysis({ patient, latestProblem, medicineNames }) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
     const profile = [
       patient?.firstName ? `Name: ${patient.firstName}` : null,
       patient?.age ? `Age: ${patient.age}` : null,
